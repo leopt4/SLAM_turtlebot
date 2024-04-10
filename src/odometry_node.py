@@ -3,10 +3,11 @@ import tf
 import rospy
 import numpy as np
 from sensor_msgs.msg import JointState
+from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA 
-from untils.Pose import *
+from untils.EKF_3DOFDifferentialDriveInputDisplacement import *
 
 wheelBase   = 0.235
 wheelRadius = 0.035
@@ -14,52 +15,13 @@ odom_freq   = 0.1
 odom_window = 100000.0
 Qk = np.diag(np.array([0.01 ** 2, 0.001 ** 2, np.deg2rad(0.1) ** 2]))  # covariance of simulated displacement noise
 
-def f(xk_1, uk):
-    posBk_1 = Pose3D(xk_1[0:3])
-    xk_bar  = posBk_1.oplus(uk)
-    return xk_bar
-
-def Jfx(xk_1, uk):
-    posBk_1 = Pose3D(xk_1[0:3])
-    J=posBk_1.J_1oplus(uk)
-    return J
-
-def Jfw(xk_1):
-    posBk_1 = Pose3D(xk_1[0:3])
-    J = posBk_1.J_2oplus()
-    return J
-
-
-def Prediction(uk, Qk, xk_1=None, Pk_1=None):
-    """
-    Prediction step of the EKF. It calls the motion model and its Jacobians to predict the state vector and its covariance matrix.
-
-    :param uk: input vector
-    :param Qk: covariance matrix of the noise vector
-    :param xk_1: previous mean state vector. By default it is taken from the class attribute. Otherwise it updates the class attribute.
-    :param Pk_1: covariance matrix of the previous state vector. By default it is taken from the class attribute. Otherwise it updates the class attribute.
-    :return xk_bar, Pk_bar: predicted mean state vector and its covariance matrix. Also updated in the class attributes.
-    """
-
-    # KF equations begin here
-    # TODO: To be implemented by the student
-    # Predict states
-    xk_bar = f(xk_1, uk)
-    # Predict covariance
-    Ak          = Jfx(xk_1, uk)
-    Wk          = Jfw(xk_1)
-
-    Pk_bar = Ak @ Pk_1 @ Ak.T + Wk @ Qk @ Wk.T
-
-    return xk_bar, Pk_bar
-
 class encoderReading:
     def __init__(self):
         self.position   = 0.0
         self.velocity   = 0.0
         self.stamp      = None
 
-class Odometry:
+class EKF:
     def __init__(self, odom_topic) -> None:
 
         # PUBLISHERS
@@ -72,11 +34,8 @@ class Odometry:
         # self.tf_world_base_footprint_pub = rospy.Publisher('~point_marker', tf, queue_size=1)
 
         # SUBSCRIBERS
-        self.odom_sub       = rospy.Subscriber(odom_topic, JointState, self.get_odom) 
-
-        # TIMERS
-        # Timer for displacement reset
-        rospy.Timer(rospy.Duration(odom_window), self.reset_displacement)
+        self.odom_sub               = rospy.Subscriber(odom_topic, JointState, self.get_odom) 
+        self.ground_truth_sub       = rospy.Subscriber('/turtlebot/odom_ground_truth', Odometry, self.get_ground_truth) 
 
         self.synchronized_velocity  = [0.0, 0.0]
         self.synchronized_stamp     = None
@@ -84,13 +43,58 @@ class Odometry:
         self.left_reading           = encoderReading()
         self.right_reading          = encoderReading()
 
+        self.current_pose           = None
+        self.xk                     = None
+        self.Pk                     = None
+        
         # Init computing displacement
         while True:
-            if self.synchronized_stamp is not None:
+            if self.synchronized_stamp is not None and self.current_pose is not None:
                 self.reset_displacement(0)
                 break
-
         
+        self.ekf_filter = EKF_3DOFDifferentialDriveInputDisplacement(self.xk, self.Pk)
+
+        # TIMERS
+        # Timer for displacement reset
+        rospy.Timer(rospy.Duration(odom_window), self.reset_displacement)
+
+        rospy.Timer(rospy.Duration(0.01), self.run_EKF)
+
+    def run_EKF(self, event):
+        # Get input to prediction step
+        uk              = self.uk
+        Qk              = np.diag(np.array([0.01 ** 2, 0.001 ** 2, np.deg2rad(0.1) ** 2]))
+        # Prediction step
+        xk_bar, Pk_bar  = self.ekf_filter.Prediction(uk, Qk, self.xk, self.Pk)
+
+        # # Get measurement, Heading of the robot
+        # zk, Rk, Hk, Vk  = self.GetMeasurements()
+        # Update step
+        xk, Pk          = self.ekf_filter.Update(self.zk, self.Rk, xk_bar, Pk_bar, self.Hk, self.Vk)
+
+        self.xk = xk
+        self.Pk = Pk
+
+        # self.displacement += self.uk
+        self.publish_point(self.xk[0:2])
+    
+    # Odometry callback: Gets current robot pose and stores it into self.current_pose
+    def get_ground_truth(self, odom):
+        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.pose.orientation.x, 
+                                                            odom.pose.pose.orientation.y,
+                                                            odom.pose.pose.orientation.z,
+                                                            odom.pose.pose.orientation.w])
+        self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
+        if self.xk is not None:
+            ns              = 3
+            self.zk         = np.array([yaw]).reshape(1,1)
+            self.Hk         = np.zeros((1,ns))
+            self.Hk[0,2]    = 1
+            self.Rk         = np.diag([np.deg2rad(1)**2])
+            # Compute V matrix
+            self.Vk         = np.diag([1.])
+            self.ekf_filter.gotNewHeadingData()
 
     def get_odom(self, odom):
         # Check if encoder data is for the left wheel
@@ -110,10 +114,8 @@ class Odometry:
             # Compute displacement
             if self.synchronized_stamp is not None and self.inited_displacement is True:
                 delta_t = next_synchronized_stamp - self.synchronized_stamp
-                uk = self.compute_displacement(delta_t)
-                self.xk, self.P = Prediction(uk, Qk, self.xk, self.P)
-                self.displacement += uk
-                self.publish_point(self.xk[0:2])
+                self.uk = self.compute_displacement(delta_t)
+                self.ekf_filter.gotNewEncoderData()
 
             self.synchronized_stamp     = next_synchronized_stamp
             # Synchronize encoder readings here
@@ -135,7 +137,7 @@ class Odometry:
         # Compute displacement of the center point of robot between k-1 and k
         d       = (d_L + d_R) / 2.
         # Compute rotated angle of robot around the center point between k-1 and k
-        delta_theta_k   = np.arctan2(d_R - d_L, wheelBase)
+        delta_theta_k   = np.arctan2(-d_R + d_L, wheelBase)
 
         # Compute xk from xk_1 and the travel distance and rotated angle. Got the equations from chapter 1.4.1: Odometry 
         uk              = np.array([[d],
@@ -145,10 +147,8 @@ class Odometry:
         return uk
 
     def reset_displacement(self, event):
-        self.xk           = np.array([[0.0],
-                                      [0.0],
-                                      [0.0]])
-        self.P            = np.zeros((3, 3))
+        self.xk           = self.current_pose.reshape(3,1)
+        self.Pk           = np.zeros((3, 3))
 
         self.displacement = np.array([[0.0],
                                       [0.0],
@@ -186,7 +186,7 @@ class Odometry:
 
 if __name__ == '__main__':
     rospy.init_node('odom_publisher')
-    node = Odometry('/turtlebot/joint_states')	
+    node = EKF('/turtlebot/joint_states')	
     
     rate = rospy.Rate(odom_freq)
     while not rospy.is_shutdown():

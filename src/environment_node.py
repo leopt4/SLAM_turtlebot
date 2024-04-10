@@ -50,7 +50,7 @@ class Environement:
     def publish_point(self,p):
         if p is not None:
             m = Marker()
-            m.header.frame_id = 'Fixed Frame'
+            m.header.frame_id = 'world_ned'
             m.header.stamp = rospy.Time.now()
             m.ns = 'point'
             m.id = 0
