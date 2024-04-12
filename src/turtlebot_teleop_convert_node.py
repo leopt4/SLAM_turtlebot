@@ -14,9 +14,9 @@ class VelocityConverter:
 
     def cmd_vel_callback(self, msg):
         v = msg.linear.x
-        w = msg.angular.z
-        v_left = (v - (w * self.d) / 2) / self.r
-        v_right = (v + (w * self.d) / 2) / self.r
+        w = -msg.angular.z
+        v_left = (v + (w * self.d) / 2) / self.r
+        v_right = (v - (w * self.d) / 2) / self.r
 
         wheel_vel_msg = Float64MultiArray()
         wheel_vel_msg.layout.dim.append(MultiArrayDimension())

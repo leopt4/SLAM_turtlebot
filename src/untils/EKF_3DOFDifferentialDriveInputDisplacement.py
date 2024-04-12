@@ -62,7 +62,7 @@ class EKF_3DOFDifferentialDriveInputDisplacement(GFLocalization, EKF):
         # Compute travel distance of the center point of robot between k-1 and k
         d       = (d_L + d_R) / 2.
         # Compute rotated angle of robot around the center point between k-1 and k
-        delta_theta_k   = np.arctan2(d_R - d_L, self.wheelBase)
+        delta_theta_k   = np.arctan2(d_L - d_R, self.wheelBase)
 
         # Compute xk from xk_1 and the travel distance and rotated angle. Got the equations from chapter 1.4.1: Odometry 
         uk              = np.array([[d],
