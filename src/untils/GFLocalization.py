@@ -64,7 +64,6 @@ class GFLocalization(GaussianFilter):
         :return xk, Pk: updated state vector and covariance matrix
         """
 
-        # TODO: To be implemented by the student
         # Get input to prediction step
         uk, Qk          = self.GetInput()
         # Prediction step

@@ -73,7 +73,6 @@ class EKF(GaussianFilter):
         """
 
         # KF equations begin here
-        # TODO: To be implemented by the student
         if self.encoderData == True:
             # Predict states
             xk_bar = self.f(xk_1, uk)
@@ -103,13 +102,11 @@ class EKF(GaussianFilter):
         :return xk,Pk: updated mean state vector and its covariance matrix. Also updated in the class attributes.
         """
 
-        # TODO: To be implemented by the student
         if self.headingData == True:
             # Compute Kalman gain
             Kk          = Pk_bar @ Hk.T @ np.linalg.inv(Hk @ Pk_bar @ Hk.T + Vk @ Rk @ Vk.T)
 
             # Compute updated state and covariance
-            a = zk - self.h(xk_bar)
             xk          = xk_bar + Kk @ (zk - self.h(xk_bar))
             I           = np.diag(np.ones(len(xk_bar)))
             Pk          = (I - Kk @ Hk) @ Pk_bar @ (I - Kk @ Hk).T

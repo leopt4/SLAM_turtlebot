@@ -9,8 +9,8 @@ class VelocityConverter:
         rospy.init_node('velocity_converter')
         self.cmd_vel_sub = rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
         self.wheel_vel_pub = rospy.Publisher('/turtlebot/kobuki/commands/wheel_velocities', Float64MultiArray, queue_size=10)
-        self.d = 0.23  # Distance between wheels (example value, adjust according to your robot)
-        self.r = 0.033 # Radius of wheels (example value, adjust according to your robot)
+        self.d = 0.235   # Distance between wheels (example value, adjust according to your robot)
+        self.r = 0.035   # Radius of wheels (example value, adjust according to your robot)
 
     def cmd_vel_callback(self, msg):
         v = msg.linear.x

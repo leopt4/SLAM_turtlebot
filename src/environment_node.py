@@ -46,31 +46,6 @@ class Environement:
                 "turtlebot/base_footprint",
                 "world_ned"
             )
-    
-    def publish_point(self,p):
-        if p is not None:
-            m = Marker()
-            m.header.frame_id = 'world_ned'
-            m.header.stamp = rospy.Time.now()
-            m.ns = 'point'
-            m.id = 0
-            m.type = Marker.SPHERE
-            m.action = Marker.ADD
-            m.pose.position.x = p[0]
-            m.pose.position.y = p[1]
-            m.pose.position.z = 0.0
-            m.pose.orientation.x = 0
-            m.pose.orientation.y = 0
-            m.pose.orientation.z = 0
-            m.pose.orientation.w = 1
-            m.scale.x = 0.05
-            m.scale.y = 0.05
-            m.scale.z = 0.05
-            m.color.a = 1.0
-            m.color.r = 0.0
-            m.color.g = 1.0
-            m.color.b = 0.0
-            self.point_marker_pub.publish(m)
 
 
 if __name__ == '__main__':

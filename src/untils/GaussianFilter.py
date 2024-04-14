@@ -17,10 +17,16 @@ class GaussianFilter:
         :param x0: initial mean state vector
         :param P0: initial covariance matrix
         """
-        # self.xk_1 = x0  # initialize state vector
-        # self.Pk_1 = P0  # initialize covariance matrix
-        # self.xk = x0  # initialize state vector
-        # self.Pk = P0  # initialize covariance matrix
+        self.xk_1   = x0  # initialize state vector
+        self.Pk_1   = P0  # initialize covariance matrix
+        self.xk     = x0  # initialize state vector
+        self.Pk     = P0  # initialize covariance matrix
+
+    def Reset(self, x0, P0):
+        self.xk_1   = x0  # initialize state vector
+        self.Pk_1   = P0  # initialize covariance matrix
+        self.xk     = x0  # initialize state vector
+        self.Pk     = P0  # initialize covariance matrix
 
     def Prediction(self, uk, Qk, xk_1=None, Pk_1=None):
         """
