@@ -21,8 +21,8 @@ class OdomData:
         self.newData    = False     # Flag presenting got new synchronized data
 
         # Init left and right encoders
-        self.rightEncoder   = Encoder('turtlebot/wheel_right_joint')
-        self.leftEncoder    = Encoder('turtlebot/wheel_left_joint')
+        self.rightEncoder   = Encoder('turtlebot/kobuki/wheel_right_joint')
+        self.leftEncoder    = Encoder('turtlebot/kobuki/wheel_left_joint')
 
         self.synchronized_velocity  = [0.0, 0.0]    # Synchronized angular velocity including the left and right encoders [rad/sec]
         self.synchronized_stamp     = None          # Synchronized time stamp [ros time]

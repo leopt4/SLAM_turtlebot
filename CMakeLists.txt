@@ -3,6 +3,7 @@ project(turtlebot_graph_slam)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,12 +12,32 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp 
     rospy
     std_msgs
+    genmsg
+    tf
+    nav_msgs
+    sensor_msgs
+    geometry_msgs
+    eigen_conversions
+    tf_conversions
+    random_numbers
+    message_generation
+    pcl_conversions
+    pcl_ros
+    std_srvs
+    laser_geometry
 )
+
+find_package(PCL REQUIRED)
+
+find_package(GTSAMCMakeTools)
 
 find_package(GTSAM REQUIRED)
 
 # Add Eigen include directory
 find_package(Eigen3 REQUIRED)
+
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## System dependencies are found with CMake's conventions
@@ -109,6 +130,11 @@ find_package(Eigen3 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+    CATKIN_DEPENDS
+    roscpp
+    std_msgs
+    sensor_msgs
+    pcl_ros
 #  INCLUDE_DIRS include
 #  LIBRARIES turtlebot_graph_slam
 #  CATKIN_DEPENDS other_catkin_pkg
@@ -122,12 +148,15 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-    ${catkin_INCLUDE_DIRS}
+include
+${catkin_INCLUDE_DIRS}
+${PCL_INCLUDE_DIRS}
+${GTSAM_INCLUDE_DIRS}
+${EIGEN3_INCLUDE_DIRS}
+${Boost_INCLUDE_DIRS}
+/usr/include/pcl-1.10/
+/usr/include/eigen3/
 )
-
-include_directories(${GTSAM_INCLUDE_DIR})
-
-include_directories(${Eigen3_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -145,6 +174,7 @@ include_directories(${Eigen3_INCLUDE_DIRS})
 # add_executable(${PROJECT_NAME}_node src/turtlebot_graph_slam_node.cpp)
 add_executable(graph_slam_node src/graph_slam_node.cpp)
 add_executable(IMU_node src/IMU_node.cpp)
+add_executable(scan_match_node src/scan_match_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -161,10 +191,20 @@ add_dependencies(IMU_node ${IMU_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS
 ## Specify libraries to link a library or executable target against
 target_link_libraries(graph_slam_node
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${GTSAM_LIBRARIES}
 )
 
 target_link_libraries(IMU_node
   ${catkin_LIBRARIES}
+)
+
+target_link_libraries(scan_match_node
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${GTSAM_LIBRARIES}
 )
 
 #############

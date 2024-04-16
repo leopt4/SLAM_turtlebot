@@ -43,7 +43,7 @@ class Environement:
                 translation,
                 rotation,
                 rospy.Time.now(),
-                "turtlebot/base_footprint",
+                "turtlebot/kobuki/base_footprint",
                 "world_ned"
             )
 
@@ -51,7 +51,7 @@ class Environement:
 if __name__ == '__main__':
     # Create an instance of the ground truth class
     rospy.init_node('ground_truth_publisher')
-    node = Environement('/turtlebot/odom_ground_truth')
+    node = Environement('/turtlebot/kobuki/odom_ground_truth')
     # Sleep briefly to ensure the TF is published
     rospy.spin()
 

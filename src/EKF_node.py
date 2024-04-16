@@ -25,7 +25,7 @@ class EKF:
         
         # SUBSCRIBERS
         self.odom_sub               = rospy.Subscriber(odom_topic, JointState, self.get_odom) 
-        self.ground_truth_sub       = rospy.Subscriber('/turtlebot/odom_ground_truth', Odometry, self.get_ground_truth) 
+        self.ground_truth_sub       = rospy.Subscriber('/turtlebot/kobuki/odom_ground_truth', Odometry, self.get_ground_truth) 
 
         self.current_pose           = None
         self.xk                     = np.zeros((3, 1))
@@ -60,6 +60,7 @@ class EKF:
 
         # Get heading as a measurement to update filter
         if self.mag.read_magnetometer(yaw):
+            print(yaw)
             self.ekf_filter.gotNewHeadingData()
 
     # Odometry callback: Gets encoder reading to compute displacement of the robot as input of the EKF Filter.
@@ -116,7 +117,7 @@ class EKF:
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
         odom.header.frame_id = "world_ned"
-        odom.child_frame_id = "turtlebot/kobuki/base_footprint"
+        odom.child_frame_id = "turtlebot/kobuki/predicted_base_footprint"
 
 
         odom.pose.pose.position.x = self.xk[0]

@@ -5,4 +5,4 @@ Description: Description of turtlebot_graph_slam
 Version: 0.0.0
 Cflags: 
 Libs: -L${prefix}/lib 
-Requires: 
+Requires: roscpp std_msgs sensor_msgs pcl_ros
