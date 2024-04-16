@@ -13,6 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
 )
 
+find_package(GTSAM REQUIRED)
+
+# Add Eigen include directory
+find_package(Eigen3 REQUIRED)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -120,6 +125,10 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 )
 
+include_directories(${GTSAM_INCLUDE_DIR})
+
+include_directories(${Eigen3_INCLUDE_DIRS})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/turtlebot_graph_slam.cpp
@@ -135,6 +144,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/turtlebot_graph_slam_node.cpp)
 add_executable(graph_slam_node src/graph_slam_node.cpp)
+add_executable(IMU_node src/IMU_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -146,9 +156,14 @@ add_executable(graph_slam_node src/graph_slam_node.cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(graph_slam_node ${graph_slam_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(IMU_node ${IMU_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(graph_slam_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(IMU_node
   ${catkin_LIBRARIES}
 )
 

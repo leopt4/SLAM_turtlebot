@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: turtlebot_graph_slam
+Description: Description of turtlebot_graph_slam
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
