@@ -51,7 +51,7 @@ Eigen::Matrix4f TFtoSE3<geometry_msgs::TransformStamped>(const geometry_msgs::Tr
     transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
     transformation.block<3, 1>(0, 3) = translation;
 
-    return transformation;
+    return (transformation.inverse());
 }
 
 // Specialization for tf::StampedTransform
@@ -68,7 +68,7 @@ Eigen::Matrix4f TFtoSE3<tf::StampedTransform>(const tf::StampedTransform &stampe
     transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
     transformation.block<3, 1>(0, 3) = translation;
 
-    return transformation;
+    return (transformation.inverse());
 }
 
 class ScanHandler
@@ -274,7 +274,7 @@ private:
     void pclMatchHypothesis()
     {
         hypothesis_.clear();
-        hypothesis_.push_back(*(storedPointClouds_.end() - 1));
+        hypothesis_.push_back(*(storedPointClouds_.end() - 2));
     };
 
     geometry_msgs::TransformStamped SE3toTF(const Eigen::Matrix4f &transformation, const std::string &frame_id, const std::string &child_frame_id)
@@ -330,6 +330,8 @@ private:
 
             // Eigen::Matrix4f initial_guess = Eigen::Matrix4f::Identity();
             Eigen::Matrix4f initial_guess = TFtoSE3(current_key_frame);
+            std::cout << "Initial guess matrix:\n"
+                      << initial_guess << std::endl;
 
             // Create an output point cloud for the aligned source
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source_aligned(new pcl::PointCloud<pcl::PointXYZ>);

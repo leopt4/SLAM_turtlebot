@@ -18,6 +18,11 @@ odom_window = 100000.0
 
 class EKF:
     def __init__(self, odom_topic) -> None:
+        self.current_pose           = None
+        self.xk           = np.zeros((3, 1))
+        self.Pk           = np.zeros((3, 3))
+        self.yawOffset    = 0.0
+        self.ekf_filter   = None
 
         # PUBLISHERS
         # Publisher for visualizing the path to with rviz
@@ -28,24 +33,18 @@ class EKF:
         # SUBSCRIBERS
         self.odom_sub               = rospy.Subscriber(odom_topic, JointState, self.get_odom) 
         self.ground_truth_sub       = rospy.Subscriber('/turtlebot/kobuki/odom_ground_truth', Odometry, self.get_ground_truth) 
-
-        self.current_pose           = None
-        self.xk                     = np.zeros((3, 1))
-        self.Pk                     = np.zeros((3, 3))
         
         # Init using sensors
         self.odom   = OdomData()
         self.mag    = Magnetometer()
-
-        # Init EKF Filter
-        self.ekf_filter = EKF_3DOF_InputDisplacement_Heading(self.xk, self.Pk, self.odom, self.mag)
         
         # Move
         while True:
             if self.current_pose is not None:
                 # self.xk           = self.current_pose.reshape(3,1)
-                self.xk           = np.zeros((3, 1))
-                self.Pk           = np.zeros((3, 3))
+                # self.xk           = np.zeros((3, 1))
+                # self.Pk           = np.zeros((3, 3))
+                self.yawOffset    = self.current_pose[2]
                 break
         
         # SERVICES
@@ -55,7 +54,8 @@ class EKF:
         # Timer for displacement reset
         # rospy.Timer(rospy.Duration(odom_window), self.reset_filter)
 
-        # rospy.Timer(rospy.Duration(0.01), self.run_EKF)
+        # Init EKF Filter
+        self.ekf_filter = EKF_3DOF_InputDisplacement_Heading(self.xk, self.Pk, self.odom, self.mag)
     
     # Ground Truth callback: Gets current robot pose and stores it into self.current_pose. Besides, get heading as a measurement to update filter
     def get_ground_truth(self, odom):
@@ -66,26 +66,28 @@ class EKF:
         self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
 
         # Get heading as a measurement to update filter
-        if self.mag.read_magnetometer(yaw):
+        if self.mag.read_magnetometer(yaw-self.yawOffset) and self.ekf_filter is not None:
             self.ekf_filter.gotNewHeadingData()
 
     # Odometry callback: Gets encoder reading to compute displacement of the robot as input of the EKF Filter.
     # Run EKF Filter with frequency of odometry reading
     def get_odom(self, odom):
         # Read encoder
-        if self.odom.read_encoder(odom):
+        if self.odom.read_encoder(odom) and self.ekf_filter is not None:
             self.ekf_filter.gotNewEncoderData()
 
-        # Run EKF Filter
-        self.xk, self.Pk = self.ekf_filter.Localize(self.xk, self.Pk)
+        if self.ekf_filter is not None:
+            # Run EKF Filter
+            self.xk, self.Pk = self.ekf_filter.Localize(self.xk, self.Pk)
 
-        # Publish rviz
-        self.publish_point(self.xk[0:2])
-        self.odom_path_pub()
+            # Publish rviz
+            self.publish_point(self.xk[0:2])
+            self.odom_path_pub()
 
     # Reset state and covariance of th EKF filter
     def reset_filter(self, request):
         # self.xk           = self.current_pose.reshape(3,1)
+        self.yawOffset    += self.xk[2]
         self.xk           = np.zeros((3, 1))
         self.Pk           = np.zeros((3, 3))
         return ResetFilterResponse(request.reset_filter_requested)

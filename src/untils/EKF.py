@@ -13,9 +13,9 @@ class EKF(GaussianFilter):
         :param args: arguments to be passed to the parent class
         """
         super().__init__(x0, P0, *args)  # call parent constructor
-
-        self.encoderData == False
-        self.headingData == False
+        
+        self.encoderData = False
+        self.headingData = False
 
     def f(self, xk_1, uk): # motion model
         """
