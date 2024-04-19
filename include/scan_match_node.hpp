@@ -21,6 +21,8 @@
 #include <tf/transform_datatypes.h>
 #include <Eigen/Dense>
 #include <eigen3/Eigen/Core>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <sstream>
 
 #include <iostream>
 #include <vector>
@@ -52,9 +54,9 @@ public:
     ros::Time lastScanTime_;
     nav_msgs::Odometry last_scan_odom_;
     nav_msgs::Odometry current_odom_;
-    int current_scan_index = 0;
+    int current_scan_index = -1;
 
-    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 5), laser_notifier_(laser_sub_, listener_, "world_ned", 5)
+    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/base_footprint", 1)
     {
 
         // Initialize subscribers
@@ -91,25 +93,31 @@ private:
             sensor_msgs::PointCloud2 cloud_in;
             try
             {
-                projector_.transformLaserScanToPointCloud("world_ned", *scan, cloud_in, listener_);
+                projector_.transformLaserScanToPointCloud("turtlebot/kobuki/base_footprint", *scan, cloud_in, listener_);
 
                 // Convert to PCL format for processing
                 pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
                 pcl::fromROSMsg(cloud_in, *pclCloud);
                 this->storePointCloud(pclCloud); // Pass the PCL point cloud pointer
+                this->current_scan_index++;
+
                 ROS_INFO("---Pointcloud (ID - %zu) Received and Stored---", ((this->storedPointClouds_.size()) - 1));
 
                 // Publishing Obtained Pointcloud
                 this->demo_.publish(cloud_in);
 
                 // Hypothesis generation and matching
-                std::vector<geometry_msgs::TransformStamped> Transformations_vector = pointCloudMatchHypothesis(pclCloud);
-                ROS_INFO("---Factors for Pointcloud (ID - %zu) Calculated---", ((this->storedPointClouds_.size()) - 1));
-                ROS_INFO("SIZE of the transformations_vector -- %zu ", Transformations_vector.size());
-                for (const auto &transform : Transformations_vector)
-                {
-                    ROS_INFO("Transformation : (%f,%f)", transform.transform.translation.x, transform.transform.translation.y);
-                };
+                // // std::vector<geometry_msgs::TransformStamped> Transformations_vector = pointCloudMatchHypothesis(pclCloud);
+                // ROS_INFO("---Factors for Pointcloud (ID - %zu) Calculated---", ((this->storedPointClouds_.size()) - 1));
+                // ROS_INFO("SIZE of the transformations_vector -- %zu ", Transformations_vector.size());
+                // for (const auto &transform : Transformations_vector)
+                // {
+                //     double theta = tf::getYaw(transform.transform.rotation);
+                //     ROS_INFO("Transformation : (%f,%f,%f)",
+                //              transform.transform.translation.x,
+                //              transform.transform.translation.y,
+                //              theta);
+                // };
 
                 // publishMatching(Transformations_vector);
 
@@ -158,6 +166,10 @@ private:
     std::vector<geometry_msgs::TransformStamped> pointCloudMatchHypothesis(const pcl::PointCloud<pcl::PointXYZ>::Ptr &currentScan)
     {
         std::vector<geometry_msgs::TransformStamped> transformations;
+
+        // pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+        // viewer->setBackgroundColor(0, 0, 0);
+
         for (size_t i = 0; i < storedPointClouds_.size(); ++i)
         {
             // Check if the points are planar
@@ -186,9 +198,26 @@ private:
 
             if (icp.hasConverged())
             {
-                ROS_INFO("ICP Fitness score --- %f", icp.getFitnessScore());
                 double meanSquaredDistance = (double)icp.getFitnessScore();
-                if (meanSquaredDistance <= 2.0)
+                ROS_INFO("ICP Fitness score --- %f", meanSquaredDistance);
+                // Plot Transformation saving condition
+                // if ()
+                // {
+                //     std::string frameId = "Current_Frame_ID - " + std::to_string(current_scan_index);
+                //     std::string frameIdAligned = "Current_Frame_ID - " + std::to_string(current_scan_index) + "_Aligned";
+                //     std::string targetId = "Target_Frame_ID - " + std::to_string(i);
+                //     viewer->addPointCloud<pcl::PointXYZ>(storedPointClouds_[i], targetId);
+                //     viewer->addPointCloud<pcl::PointXYZ>(currentScan, frameId);
+                //     pcl::PointCloud<pcl::PointXYZ>::Ptr alignedCloudPtr(new pcl::PointCloud<pcl::PointXYZ>(alignedCloud));
+                //     viewer->addPointCloud<pcl::PointXYZ>(alignedCloudPtr, frameIdAligned);
+                //     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, targetId);
+                //     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameId);
+                //     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameIdAligned);
+                //     std::string file_name = "pcl_viz/"+frameId+".png";
+                //     viewer->saveScreenshot(file_name);
+                // };
+
+                if (meanSquaredDistance <= 0.8)
                 {
                     // Extract the transformation matrix from current scan to store scan
                     Eigen::Matrix4f transformationMatrix_c2s = icp.getFinalTransformation();
@@ -197,8 +226,8 @@ private:
                     Eigen::Matrix4f transformationMatrix = transformationMatrix_c2s.inverse();
 
                     // Extract translation (x, y) and rotation (theta)
-                    double x = transformationMatrix(0, 3) * 100;
-                    double y = transformationMatrix(1, 3) * 100;
+                    double x = transformationMatrix(0, 3) * 10;
+                    double y = transformationMatrix(1, 3) * 10;
                     double theta = tf::getYaw(tf::Quaternion(
                         transformationMatrix(0, 0),
                         transformationMatrix(1, 0),

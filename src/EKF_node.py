@@ -60,7 +60,6 @@ class EKF:
 
         # Get heading as a measurement to update filter
         if self.mag.read_magnetometer(yaw):
-            print(yaw)
             self.ekf_filter.gotNewHeadingData()
 
     # Odometry callback: Gets encoder reading to compute displacement of the robot as input of the EKF Filter.
