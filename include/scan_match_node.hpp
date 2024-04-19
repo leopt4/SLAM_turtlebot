@@ -30,6 +30,43 @@
 
 // using namespace std;
 
+template <typename T>
+Eigen::Matrix4f TFtoSE3(const T &transform);
+
+// Specialization for geometry_msgs::TransformStamped
+template <>
+Eigen::Matrix4f TFtoSE3<geometry_msgs::TransformStamped>(const geometry_msgs::TransformStamped &transformStamped)
+{
+    const geometry_msgs::Quaternion &q = transformStamped.transform.rotation;
+    const geometry_msgs::Vector3 &t = transformStamped.transform.translation;
+
+    Eigen::Quaternionf quaternion(q.w, q.x, q.y, q.z);
+    Eigen::Vector3f translation(t.x, t.y, t.z);
+
+    Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
+    transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
+    transformation.block<3, 1>(0, 3) = translation;
+
+    return transformation;
+}
+
+// Specialization for tf::StampedTransform
+template <>
+Eigen::Matrix4f TFtoSE3<tf::StampedTransform>(const tf::StampedTransform &stampedTransform)
+{
+    const tf::Quaternion &q = stampedTransform.getRotation();
+    const tf::Vector3 &t = stampedTransform.getOrigin();
+
+    Eigen::Quaternionf quaternion(q.w(), q.x(), q.y(), q.z());
+    Eigen::Vector3f translation(t.x(), t.y(), t.z());
+
+    Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
+    transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
+    transformation.block<3, 1>(0, 3) = translation;
+
+    return transformation;
+}
+
 class ScanHandler
 {
 public:
@@ -103,7 +140,7 @@ private:
                 ros::Time scanTime = scan->header.stamp;
 
                 // Wait for the transformation to become available
-                listener_.waitForTransform(targetFrame, sourceFrame, scanTime, ros::Duration(0.2));
+                listener_.waitForTransform(targetFrame, sourceFrame, scanTime, ros::Duration(0.1));
 
                 // Now, attempt to look up the transformation
                 listener_.lookupTransform(targetFrame, sourceFrame, scanTime, current_key_frame);
@@ -113,7 +150,11 @@ private:
                 // Convert to PCL format for processing
                 pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
                 pcl::fromROSMsg(cloud_in, *pclCloud);
+
+                // Only taking the planar PointCloud model
                 pcl::PointCloud<pcl::PointXYZ>::Ptr planarPointcloud = fitPlanarModel(pclCloud);
+
+                //Storing the Pointcloud and keyframe
                 storePointCloudandKeyframe(planarPointcloud, current_key_frame); // Pass the PCL point cloud pointer
                 current_scan_index++;
 
@@ -127,18 +168,19 @@ private:
                     // Hypothesis generation and matching
                     pclMatchHypothesis();
                     std::vector<geometry_msgs::TransformStamped> Transformations_vector = pointCloudMatching(planarPointcloud);
-                    // ROS_INFO("---Factors for Pointcloud (ID - %zu) Calculated---", ((this->storedPointClouds_.size()) - 1));
+                    ROS_INFO("---Factors for Pointcloud (ID - %d) Calculated---", current_scan_index);
                     // ROS_INFO("SIZE of the transformations_vector -- %zu ", Transformations_vector.size());
-                    // for (const auto &transform : Transformations_vector)
-                    // {
-                    //     double theta = tf::getYaw(transform.transform.rotation);
-                    //     ROS_INFO("Transformation : (%f,%f,%f)",
-                    //              transform.transform.translation.x,
-                    //              transform.transform.translation.y,
-                    //              theta);
-                    // };
+                    for (const auto &transform : Transformations_vector)
+                    {
+                        double theta = tf::getYaw(transform.transform.rotation);
+                        ROS_INFO("Transformation : (%f,%f,%f)",
+                                 transform.transform.translation.x,
+                                 transform.transform.translation.y,
+                                 theta);
+                    };
 
                     // publishMatching(Transformations_vector);
+
                 };
                 time_trigger_ = false;
                 last_scan_odom_ = current_odom_;
@@ -218,26 +260,6 @@ private:
         hypothesis_.push_back(*(storedPointClouds_.end() - 1));
     };
 
-    Eigen::Matrix4f TFtoSE3(const geometry_msgs::TransformStamped &transformStamped)
-    {
-        // Extract the rotation and translation from the TransformStamped message
-        const geometry_msgs::Quaternion &q = transformStamped.transform.rotation;
-        const geometry_msgs::Vector3 &t = transformStamped.transform.translation;
-
-        // Convert the quaternion to an Eigen quaternion
-        Eigen::Quaternionf quaternion(q.w, q.x, q.y, q.z);
-
-        // Convert the translation to an Eigen vector
-        Eigen::Vector3f translation(t.x, t.y, t.z);
-
-        // Construct the transformation matrix
-        Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
-        transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
-        transformation.block<3, 1>(0, 3) = translation;
-
-        return transformation;
-    };
-
     geometry_msgs::TransformStamped SE3toTF(const Eigen::Matrix4f &transformation, const std::string &frame_id, const std::string &child_frame_id)
     {
         // Extract the rotation matrix and translation vector from the transformation matrix
@@ -281,15 +303,16 @@ private:
             icp.setInputTarget(hypothesis_[i]);
 
             // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-            icp.setMaxCorrespondenceDistance(0.05);
+            // icp.setMaxCorrespondenceDistance(0.05);
             // Set the maximum number of iterations
-            icp.setMaximumIterations(100);
+            // icp.setMaximumIterations(100);
             // Set the transformation epsilon
-            icp.setTransformationEpsilon(1e-8);
+            // icp.setTransformationEpsilon(1e-8);
             // Set the euclidean distance difference epsilon
-            icp.setEuclideanFitnessEpsilon(1);
+            // icp.setEuclideanFitnessEpsilon(1);
 
-            Eigen::Matrix4f initial_guess = Eigen::Matrix4f::Identity();
+            // Eigen::Matrix4f initial_guess = Eigen::Matrix4f::Identity();
+            Eigen::Matrix4f initial_guess = TFtoSE3(current_key_frame);
 
             // Create an output point cloud for the aligned source
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source_aligned(new pcl::PointCloud<pcl::PointXYZ>);
