@@ -10,6 +10,8 @@ from untils.EKF_3DOF_InputDisplacement_Heading import *
 from untils.odometry import *
 from untils.magnetometer import *
 
+from turtlebot_graph_slam.srv import ResetFilter, ResetFilterResponse
+
 odom_freq   = 0.1
 odom_window = 100000.0
 
@@ -41,12 +43,17 @@ class EKF:
         # Move
         while True:
             if self.current_pose is not None:
-                self.reset_filter(0)
+                # self.xk           = self.current_pose.reshape(3,1)
+                self.xk           = np.zeros((3, 1))
+                self.Pk           = np.zeros((3, 3))
                 break
+        
+        # SERVICES
+        reset_srv = rospy.Service('ResetFilter', ResetFilter, self.reset_filter)
 
         # TIMERS
         # Timer for displacement reset
-        rospy.Timer(rospy.Duration(odom_window), self.reset_filter)
+        # rospy.Timer(rospy.Duration(odom_window), self.reset_filter)
 
         # rospy.Timer(rospy.Duration(0.01), self.run_EKF)
     
@@ -77,9 +84,12 @@ class EKF:
         self.odom_path_pub()
 
     # Reset state and covariance of th EKF filter
-    def reset_filter(self, event):
-        self.xk           = self.current_pose.reshape(3,1)
+    def reset_filter(self, request):
+        # self.xk           = self.current_pose.reshape(3,1)
+        self.xk           = np.zeros((3, 1))
         self.Pk           = np.zeros((3, 3))
+        return ResetFilterResponse(request.reset_filter_requested)
+
 
     # Publish markers
     def publish_point(self,p):

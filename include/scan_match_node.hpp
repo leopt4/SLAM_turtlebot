@@ -22,7 +22,11 @@
 #include <Eigen/Dense>
 #include <eigen3/Eigen/Core>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/filters/extract_indices.h>
+
+#include "turtlebot_graph_slam/ResetFilter.h"
+
 #include <sstream>
 
 #include <iostream>
@@ -94,8 +98,9 @@ public:
     nav_msgs::Odometry current_odom_;
     int current_scan_index = -1;
     tf::StampedTransform current_key_frame;
+    ros::ServiceClient client_;
 
-    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/predicted_base_footprint", 1)
+    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/predicted_base_footprint", 1), client_(nh.serviceClient<turtlebot_graph_slam::ResetFilter>("ResetFilter"))
     {
 
         // Initialize subscribers
@@ -154,7 +159,7 @@ private:
                 // Only taking the planar PointCloud model
                 pcl::PointCloud<pcl::PointXYZ>::Ptr planarPointcloud = fitPlanarModel(pclCloud);
 
-                //Storing the Pointcloud and keyframe
+                // Storing the Pointcloud and keyframe
                 storePointCloudandKeyframe(planarPointcloud, current_key_frame); // Pass the PCL point cloud pointer
                 current_scan_index++;
 
@@ -178,18 +183,30 @@ private:
                                  transform.transform.translation.y,
                                  theta);
                     };
-
-                    // publishMatching(Transformations_vector);
-
                 };
-                time_trigger_ = false;
+
+                // publishMatching(Transformations_vector);
                 last_scan_odom_ = current_odom_;
+
+                turtlebot_graph_slam::ResetFilter srv;
+                srv.request.reset_filter_requested = true;
+
+                if (client_.call(srv))
+                {
+                    ROS_INFO("Odometry Filter (EKF) is succesfully reset.... : %d", (bool)srv.response.reset_filter_response);
+                }
+                else
+                {
+                    ROS_ERROR("Failed to call reset Odometry Filter!!!!!!!");
+                };
+
+                time_trigger_ = false;
             }
             catch (tf::TransformException &e)
             {
                 ROS_ERROR("Transform error: %s", e.what());
                 return;
-            }
+            };
         }
         else
         {
@@ -201,13 +218,13 @@ private:
     void odometryCallback(const nav_msgs::Odometry::ConstPtr &odom)
     {
         // Saving current odom
-        this->current_odom_ = *odom;
+        current_odom_ = *odom;
 
         double dx = odom->pose.pose.position.x - (this->last_scan_odom_.pose.pose.position.x);
         double dy = odom->pose.pose.position.y - (this->last_scan_odom_.pose.pose.position.y);
         double displacement = sqrt(dx * dx + dy * dy);
 
-        if (displacement > (this->thresholdOdometry_))
+        if (displacement > (thresholdOdometry_))
         {
             odom_trigger_ = true;
         };
@@ -293,9 +310,6 @@ private:
     {
         std::vector<geometry_msgs::TransformStamped> transformations;
 
-        // pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-        // viewer->setBackgroundColor(0, 0, 0);
-
         for (size_t i = 0; i < hypothesis_.size(); ++i)
         {
             pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
@@ -304,10 +318,13 @@ private:
 
             // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
             // icp.setMaxCorrespondenceDistance(0.05);
+
             // Set the maximum number of iterations
             // icp.setMaximumIterations(100);
+
             // Set the transformation epsilon
             // icp.setTransformationEpsilon(1e-8);
+
             // Set the euclidean distance difference epsilon
             // icp.setEuclideanFitnessEpsilon(1);
 
@@ -328,21 +345,10 @@ private:
                 double meanSquaredDistance = (double)icp.getFitnessScore();
                 ROS_INFO("ICP Fitness score --- %f", meanSquaredDistance);
                 // Plot Transformation saving condition
-                // if ()
-                // {
-                //     std::string frameId = "Current_Frame_ID - " + std::to_string(current_scan_index);
-                //     std::string frameIdAligned = "Current_Frame_ID - " + std::to_string(current_scan_index) + "_Aligned";
-                //     std::string targetId = "Target_Frame_ID - " + std::to_string(i);
-                //     viewer->addPointCloud<pcl::PointXYZ>(hypothesis_[i], targetId);
-                //     viewer->addPointCloud<pcl::PointXYZ>(currentScan, frameId);
-                //     pcl::PointCloud<pcl::PointXYZ>::Ptr alignedCloudPtr(new pcl::PointCloud<pcl::PointXYZ>(alignedCloud));
-                //     viewer->addPointCloud<pcl::PointXYZ>(alignedCloudPtr, frameIdAligned);
-                //     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, targetId);
-                //     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameId);
-                //     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameIdAligned);
-                //     std::string file_name = "pcl_viz/"+frameId+".png";
-                //     viewer->saveScreenshot(file_name);
-                // };
+                if (current_scan_index == 1)
+                {
+                    savePointcloud(currentScan, hypothesis_[i], cloud_source_aligned);
+                };
 
                 if (meanSquaredDistance <= 1.0)
                 {
@@ -355,6 +361,28 @@ private:
             };
         };
         return transformations;
+    };
+
+    void savePointcloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &source, const pcl::PointCloud<pcl::PointXYZ>::Ptr &target, const pcl::PointCloud<pcl::PointXYZ>::Ptr &aligned)
+    {
+        // pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+        // viewer->setBackgroundColor(0, 0, 0);
+        // std::string frameId = "Current_Frame_ID-" + std::to_string(current_scan_index);
+        // std::string frameIdAligned = "Current_Frame_ID-" + std::to_string(current_scan_index) + "_Aligned";
+        // std::string targetId = "Target_Frame_ID-" + std::to_string(current_scan_index - 1);
+        // viewer->addPointCloud<pcl::PointXYZ>(target, targetId);
+        // viewer->addPointCloud<pcl::PointXYZ>(source, frameId);
+        // viewer->addPointCloud<pcl::PointXYZ>(aligned, frameIdAligned);
+        // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, targetId);
+        // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameId);
+        // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameIdAligned);
+        // std::string file_name = "/home/patweatharva/ros_work/turtlebot_class/src/turtlebot_graph_slam/pcl_viz/" + frameId + ".png";
+        // viewer->saveScreenshot(file_name);
+
+        std::string directory = "/home/patweatharva/ros_work/turtlebot_class/src/turtlebot_graph_slam/pcl_viz/";
+        pcl::io::savePCDFileASCII(directory + "source.pcd", *source);
+        pcl::io::savePCDFileASCII(directory + "target.pcd", *target);
+        pcl::io::savePCDFileASCII(directory + "aligned.pcd", *aligned);
     };
 };
 
