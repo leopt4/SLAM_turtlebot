@@ -1,0 +1,4 @@
+# ResetFilter.srv
+bool reset_filter_requested
+---
+bool reset_filter_response

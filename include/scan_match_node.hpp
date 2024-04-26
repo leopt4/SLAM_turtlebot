@@ -317,16 +317,16 @@ private:
             icp.setInputTarget(hypothesis_[i]);
 
             // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-            // icp.setMaxCorrespondenceDistance(0.05);
+            icp.setMaxCorrespondenceDistance(0.05);
 
             // Set the maximum number of iterations
             // icp.setMaximumIterations(100);
 
             // Set the transformation epsilon
-            // icp.setTransformationEpsilon(1e-8);
+            icp.setTransformationEpsilon(1e-6);
 
             // Set the euclidean distance difference epsilon
-            // icp.setEuclideanFitnessEpsilon(1);
+            icp.setEuclideanFitnessEpsilon(0.05);
 
             // Eigen::Matrix4f initial_guess = Eigen::Matrix4f::Identity();
             Eigen::Matrix4f initial_guess = TFtoSE3(current_key_frame);
@@ -355,7 +355,9 @@ private:
                 if (meanSquaredDistance <= 1.0)
                 {
                     // Create a TransformStamped message
-                    geometry_msgs::TransformStamped tfs = SE3toTF(final_transformation, "jji", "kj");
+                    std::string frameID="jk";
+                    std::string childID="kj";
+                    geometry_msgs::TransformStamped tfs = SE3toTF(final_transformation, frameID, childID);
 
                     // Add the transformation to the vector
                     transformations.push_back(tfs);
