@@ -1,5 +1,6 @@
 from .GaussianFilter import GaussianFilter
 import math
+from .AngleHandler import *
 
 class GFLocalization(GaussianFilter):
     """
@@ -75,6 +76,8 @@ class GFLocalization(GaussianFilter):
         # Update step
         xk, Pk          = self.Update(zk, Rk, xk_bar, Pk_bar, Hk, Vk)
 
+        # Normalise heading angle
+        xk[2]           = normalize_angle(xk[2])
         return xk, Pk
         # return xk, Pk, xk_bar, zk, Rk
 

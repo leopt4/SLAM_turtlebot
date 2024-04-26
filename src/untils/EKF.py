@@ -1,5 +1,6 @@
 from .GaussianFilter import *
 import numpy as np
+from .AngleHandler import *
 class EKF(GaussianFilter):
     """
     Extended Kalman Filter class. Implements the :class:`GaussianFilter` interface for the particular case of the Extended Kalman Filter.
@@ -107,7 +108,7 @@ class EKF(GaussianFilter):
             Kk          = Pk_bar @ Hk.T @ np.linalg.inv(Hk @ Pk_bar @ Hk.T + Vk @ Rk @ Vk.T)
 
             # Compute updated state and covariance
-            xk          = xk_bar + Kk @ (zk - self.h(xk_bar))
+            xk          = xk_bar + Kk @ normalize_angle(zk - self.h(xk_bar))
             I           = np.diag(np.ones(len(xk_bar)))
             Pk          = (I - Kk @ Hk) @ Pk_bar @ (I - Kk @ Hk).T
 

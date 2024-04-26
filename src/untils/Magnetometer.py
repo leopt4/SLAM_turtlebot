@@ -1,5 +1,6 @@
 import numpy as np
 import rospy
+from .AngleHandler import *
 
 class Magnetometer:
     def __init__(self) -> None:
@@ -32,4 +33,5 @@ class Magnetometer:
 
         :return displacement, Rk: mean heading and its covariance matrix.
         """
-        return np.array([self.heading]).reshape(1,1), self.Rk
+        return np.array([normalize_angle(self.heading)]).reshape(1,1), self.Rk
+    

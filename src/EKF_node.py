@@ -7,8 +7,8 @@ from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker
 from untils.EKF_3DOF_InputDisplacement_Heading import *
 
-from untils.odometry import *
-from untils.magnetometer import *
+from untils.Odometry import *
+from untils.Magnetometer import *
 
 from turtlebot_graph_slam.srv import ResetFilter, ResetFilterResponse
 
@@ -86,6 +86,9 @@ class EKF:
 
     # Reset state and covariance of th EKF filter
     def reset_filter(self, request):
+        print("x position: ", np.round(self.xk[0], 2))
+        print("y position: ", np.round(self.xk[1], 2))
+        print("Heading: ", np.round(self.xk[2], 2) * 180 / math.pi)
         # self.xk           = self.current_pose.reshape(3,1)
         self.yawOffset    += self.xk[2]
         self.xk           = np.zeros((3, 1))

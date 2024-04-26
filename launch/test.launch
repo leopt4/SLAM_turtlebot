@@ -1,0 +1,4 @@
+<launch>
+    <!-- Scan matching node -->
+    <node pkg="turtlebot_graph_slam" type="scan_match_node" name="scan_match_node"/>
+</launch>

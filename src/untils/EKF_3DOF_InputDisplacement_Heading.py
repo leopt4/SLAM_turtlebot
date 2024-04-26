@@ -1,8 +1,8 @@
 from .GFLocalization import *
 from .EKF import *
 from .Pose import *
-from .odometry import *
-from .magnetometer import *
+from .Odometry import *
+from .Magnetometer import *
 
 class EKF_3DOF_InputDisplacement_Heading(GFLocalization, EKF, OdomData):
     """
