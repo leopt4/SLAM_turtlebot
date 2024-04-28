@@ -2,6 +2,7 @@
 #define SCAN_HANDLER_H
 
 #include "ros/ros.h"
+#include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
@@ -51,7 +52,9 @@ Eigen::Matrix4f TFtoSE3<geometry_msgs::TransformStamped>(const geometry_msgs::Tr
     transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
     transformation.block<3, 1>(0, 3) = translation;
 
-    return (transformation.inverse());
+    Eigen::Matrix4f transformation_inverse = transformation.inverse();
+
+    return (transformation_inverse);
 }
 
 // Specialization for tf::StampedTransform
@@ -68,14 +71,16 @@ Eigen::Matrix4f TFtoSE3<tf::StampedTransform>(const tf::StampedTransform &stampe
     transformation.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
     transformation.block<3, 1>(0, 3) = translation;
 
-    return (transformation.inverse());
+    Eigen::Matrix4f transformation_inverse = transformation.inverse();
+
+    return (transformation_inverse);
 }
 
 class ScanHandler
 {
 public:
     ros::NodeHandle &nh_;
-    ros::Publisher demo_ = this->nh_.advertise<sensor_msgs::PointCloud2>("/pc", 1);
+    ros::Publisher pointcloud_pub_ = this->nh_.advertise<sensor_msgs::PointCloud2>("/pc", 1);
 
     // Laser Geometry Projection for converting scan to PointCloud
     laser_geometry::LaserProjection projector_;
@@ -100,6 +105,9 @@ public:
     tf::StampedTransform current_key_frame;
     ros::ServiceClient client_;
 
+    Eigen::Matrix4f Twtok = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f Tktokplus1 = Eigen::Matrix4f::Identity();
+
     ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/predicted_base_footprint", 1), client_(nh.serviceClient<turtlebot_graph_slam::ResetFilter>("ResetFilter"))
     {
 
@@ -123,12 +131,19 @@ public:
         storedKeyframes_.push_back(keyframe);
     };
 
+    void storeWorldPointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)
+    {
+        world_ned_storedPointClouds_.push_back(cloud);
+    };
+
 private:
     // A vector of Pointers to the PointClouds for storing Incoming scans
     // std::vector<pcl::PointCloud<pcl::PointXYZ>> storedPointClouds_;   // For directly storing pointclouds
     std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> storedPointClouds_;
+    std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> world_ned_storedPointClouds_;
     std::vector<tf::StampedTransform> storedKeyframes_;
     std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> hypothesis_;
+    pcl::PointCloud<pcl::PointXYZ> world_map_;
     // void publishMatching(const std::pair<double, double> &transformations, const std::vector<int> &matching_ids);
 
     // Scan Callback method
@@ -139,18 +154,32 @@ private:
             sensor_msgs::PointCloud2 cloud_in;
             try
             {
+                ros::Time start_time_ = ros::Time::now();
+                projector_.transformLaserScanToPointCloud("turtlebot/kobuki/predicted_base_footprint", *scan, cloud_in, listener_);
+
                 // Saving the current key frame of the robot
                 std::string targetFrame = "turtlebot/kobuki/predicted_base_footprint";
                 std::string sourceFrame = "world_ned";
                 ros::Time scanTime = scan->header.stamp;
 
                 // Wait for the transformation to become available
-                listener_.waitForTransform(targetFrame, sourceFrame, scanTime, ros::Duration(0.1));
+                listener_.waitForTransform(targetFrame, sourceFrame, scanTime, ros::Duration(0.05));
 
                 // Now, attempt to look up the transformation
                 listener_.lookupTransform(targetFrame, sourceFrame, scanTime, current_key_frame);
+                last_scan_odom_ = current_odom_;
 
-                projector_.transformLaserScanToPointCloud("turtlebot/kobuki/predicted_base_footprint", *scan, cloud_in, listener_);
+                turtlebot_graph_slam::ResetFilter srv;
+                srv.request.reset_filter_requested = true;
+
+                if (client_.call(srv))
+                {
+                    ROS_INFO("Odometry Filter (EKF) is succesfully reset.... : %d", (bool)srv.response.reset_filter_response);
+                }
+                else
+                {
+                    ROS_ERROR("Failed to call reset Odometry Filter!!!!!!!");
+                };
 
                 // Convert to PCL format for processing
                 pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -163,10 +192,15 @@ private:
                 storePointCloudandKeyframe(planarPointcloud, current_key_frame); // Pass the PCL point cloud pointer
                 current_scan_index++;
 
+                Eigen::Matrix4f current_tf = TFtoSE3(current_key_frame);
+
+                std::cout << "Current Key Frame:\n"
+                          << current_tf << std::endl;
+
                 ROS_INFO("---Pointcloud (ID - %d) Received and Stored---", current_scan_index);
 
                 // Publishing Obtained Pointcloud
-                demo_.publish(cloud_in);
+                // pointcloud_pub_.publish(cloud_in);
 
                 if (current_scan_index > 0)
                 {
@@ -183,22 +217,23 @@ private:
                                  transform.transform.translation.y,
                                  theta);
                     };
-                };
-
-                // publishMatching(Transformations_vector);
-                last_scan_odom_ = current_odom_;
-
-                turtlebot_graph_slam::ResetFilter srv;
-                srv.request.reset_filter_requested = true;
-
-                if (client_.call(srv))
-                {
-                    ROS_INFO("Odometry Filter (EKF) is succesfully reset.... : %d", (bool)srv.response.reset_filter_response);
                 }
                 else
                 {
-                    ROS_ERROR("Failed to call reset Odometry Filter!!!!!!!");
-                };
+                    Twtok = TFtoSE3(current_key_frame);
+                }
+                ros::Time end_time_ = ros::Time::now();
+                ros::Duration scan_processing_time = end_time_ - start_time_;
+
+                ROS_INFO_STREAM(" Scan Processing Runtime: " << scan_processing_time.toSec());
+
+                // publishMatching(Transformations_vector);
+
+                // TODO: Registrations conditions
+                if ( true ||current_scan_index == 0 || current_scan_index == 1 || current_scan_index ==2 || current_scan_index ==3)
+                {
+                    registerPointcloudinWorld(planarPointcloud);
+                }
 
                 time_trigger_ = false;
             }
@@ -238,7 +273,7 @@ private:
         // {
         //     time_trigger_=true;
         // }
-        this->time_trigger_ = true;
+        time_trigger_ = true;
     };
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr fitPlanarModel(pcl::PointCloud<pcl::PointXYZ>::Ptr &currentScan)
@@ -274,7 +309,7 @@ private:
     void pclMatchHypothesis()
     {
         hypothesis_.clear();
-        hypothesis_.push_back(*(storedPointClouds_.end() - 2));
+        hypothesis_.push_back(storedPointClouds_[storedPointClouds_.size() - 2]);
     };
 
     geometry_msgs::TransformStamped SE3toTF(const Eigen::Matrix4f &transformation, const std::string &frame_id, const std::string &child_frame_id)
@@ -320,7 +355,7 @@ private:
             icp.setMaxCorrespondenceDistance(0.05);
 
             // Set the maximum number of iterations
-            // icp.setMaximumIterations(100);
+            icp.setMaximumIterations(5000);
 
             // Set the transformation epsilon
             icp.setTransformationEpsilon(1e-6);
@@ -330,6 +365,7 @@ private:
 
             // Eigen::Matrix4f initial_guess = Eigen::Matrix4f::Identity();
             Eigen::Matrix4f initial_guess = TFtoSE3(current_key_frame);
+
             std::cout << "Initial guess matrix:\n"
                       << initial_guess << std::endl;
 
@@ -340,12 +376,13 @@ private:
             icp.align(*cloud_source_aligned, initial_guess);
 
             // Obtain the final transformation matrix
-            Eigen::Matrix4f final_transformation = icp.getFinalTransformation();
+            Tktokplus1 = icp.getFinalTransformation();
 
             if (icp.hasConverged())
             {
                 double meanSquaredDistance = (double)icp.getFitnessScore();
                 ROS_INFO("ICP Fitness score --- %f", meanSquaredDistance);
+
                 // Plot Transformation saving condition
                 if (current_scan_index == 1)
                 {
@@ -355,9 +392,9 @@ private:
                 if (meanSquaredDistance <= 1.0)
                 {
                     // Create a TransformStamped message
-                    std::string frameID="jk";
-                    std::string childID="kj";
-                    geometry_msgs::TransformStamped tfs = SE3toTF(final_transformation, frameID, childID);
+                    std::string frameID = "jk";
+                    std::string childID = "kj";
+                    geometry_msgs::TransformStamped tfs = SE3toTF(Tktokplus1, frameID, childID);
 
                     // Add the transformation to the vector
                     transformations.push_back(tfs);
@@ -369,24 +406,62 @@ private:
 
     void savePointcloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &source, const pcl::PointCloud<pcl::PointXYZ>::Ptr &target, const pcl::PointCloud<pcl::PointXYZ>::Ptr &aligned)
     {
-        // pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-        // viewer->setBackgroundColor(0, 0, 0);
-        // std::string frameId = "Current_Frame_ID-" + std::to_string(current_scan_index);
-        // std::string frameIdAligned = "Current_Frame_ID-" + std::to_string(current_scan_index) + "_Aligned";
-        // std::string targetId = "Target_Frame_ID-" + std::to_string(current_scan_index - 1);
-        // viewer->addPointCloud<pcl::PointXYZ>(target, targetId);
-        // viewer->addPointCloud<pcl::PointXYZ>(source, frameId);
-        // viewer->addPointCloud<pcl::PointXYZ>(aligned, frameIdAligned);
-        // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, targetId);
-        // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameId);
-        // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, frameIdAligned);
-        // std::string file_name = "/home/patweatharva/ros_work/turtlebot_class/src/turtlebot_graph_slam/pcl_viz/" + frameId + ".png";
-        // viewer->saveScreenshot(file_name);
+        // Get the path to the current ROS package
+        std::string packagePath = ros::package::getPath("turtlebot_graph_slam");
+        std::string directory = "/pcl_viz/";
+        pcl::io::savePCDFileASCII(packagePath + directory + "source.pcd", *source);
+        pcl::io::savePCDFileASCII(packagePath + directory + "target.pcd", *target);
+        pcl::io::savePCDFileASCII(packagePath + directory + "aligned.pcd", *aligned);
+    };
 
-        std::string directory = "/home/patweatharva/ros_work/turtlebot_class/src/turtlebot_graph_slam/pcl_viz/";
-        pcl::io::savePCDFileASCII(directory + "source.pcd", *source);
-        pcl::io::savePCDFileASCII(directory + "target.pcd", *target);
-        pcl::io::savePCDFileASCII(directory + "aligned.pcd", *aligned);
+    void registerPointcloudinWorld(const pcl::PointCloud<pcl::PointXYZ>::Ptr &currentScan)
+    {
+
+        // std::cout << "T w to k for scan ID "<<current_scan_index<< ":\n"
+        //           << Twtok << std::endl;
+        // std::cout << "T k to k+1 for scan ID "<<current_scan_index<< ":\n"
+        //           << Tktokplus1 << std::endl;
+
+        Eigen::Matrix4f Twtokplus1 = Twtok * Tktokplus1;
+
+        // std::cout << "T w to k+1 for scan ID "<<current_scan_index<< ":\n"
+        //           << Twtokplus1 << std::endl;
+
+        // Transform currentScan to world_ned
+        pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud_world(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::transformPointCloud(*currentScan, *transformed_cloud_world, Twtokplus1);
+
+        // Store it in world_ned_storedPointClouds_
+        storeWorldPointCloud(transformed_cloud_world);
+
+        // Combine the pointcloud
+        if (world_map_.empty())
+        {
+            world_map_ = (*transformed_cloud_world);
+        }
+        else
+        {
+
+            world_map_ += (*transformed_cloud_world);
+        };
+
+        Twtok = Twtokplus1;
+
+        // Publish the whole point cloud
+        publishWorldPointcloud();
+    };
+
+    void publishWorldPointcloud()
+    {
+        sensor_msgs::PointCloud2 world_cloud_out;
+
+        pcl::toROSMsg(world_map_, world_cloud_out);
+
+        world_cloud_out.header.frame_id = "world_ned";
+        world_cloud_out.header.stamp = ros::Time::now();
+
+        // Publish the point cloud
+        pointcloud_pub_.publish(world_cloud_out);
     };
 };
 
