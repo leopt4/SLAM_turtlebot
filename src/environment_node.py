@@ -20,7 +20,7 @@ class Environement:
 
         # TIMERS
         # Timer for velocity controller
-        rospy.Timer(rospy.Duration(0.001), self.publish_tf)
+        # rospy.Timer(rospy.Duration(0.001), self.publish_tf)
 
 
     # Odometry callback: Gets current robot pose and stores it into self.current_pose

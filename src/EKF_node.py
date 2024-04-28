@@ -19,10 +19,12 @@ odom_window = 100000.0
 class EKF:
     def __init__(self, odom_topic) -> None:
         self.current_pose           = None
-        self.xk           = np.zeros((3, 1))
-        self.Pk           = np.zeros((3, 3))
+        self.xk           = np.zeros((3, 1))        # Robot pose in the k frame
+        self.Pk           = np.zeros((3, 3))        # Robot covariance in the k frame  
         self.yawOffset    = 0.0
         self.ekf_filter   = None
+        self.x_map        = np.zeros((3, 1))        # Robot pose in the map frame
+        self.x_frame_k    = np.zeros((3, 1))        # k frame pose in the map frame
 
         # PUBLISHERS
         # Publisher for visualizing the path to with rviz
@@ -37,7 +39,7 @@ class EKF:
         # Init using sensors
         self.odom   = OdomData()
         self.mag    = Magnetometer()
-        
+
         # Move
         while True:
             if self.current_pose is not None:
@@ -48,7 +50,7 @@ class EKF:
                 break
         
         # SERVICES
-        reset_srv = rospy.Service('ResetFilter', ResetFilter, self.reset_filter)
+        self.reset_srv = rospy.Service('ResetFilter', ResetFilter, self.reset_filter)
 
         # TIMERS
         # Timer for displacement reset
@@ -80,21 +82,25 @@ class EKF:
             # Run EKF Filter
             self.xk, self.Pk = self.ekf_filter.Localize(self.xk, self.Pk)
 
+            self.x_map       = Pose3D.oplus(self.x_frame_k, self.xk)
+
             # Publish rviz
-            self.publish_point(self.xk[0:2])
             self.odom_path_pub()
+
+            self.publish_tf_map()
 
     # Reset state and covariance of th EKF filter
     def reset_filter(self, request):
-        print("x position: ", np.round(self.xk[0], 2))
-        print("y position: ", np.round(self.xk[1], 2))
-        print("Heading: ", np.round(self.xk[2], 2) * 180 / math.pi)
+        # print("x position: ", np.round(self.xk[0], 2))
+        # print("y position: ", np.round(self.xk[1], 2))
+        # print("Heading: ", np.round(self.xk[2], 2) * 180 / math.pi)
         # self.xk           = self.current_pose.reshape(3,1)
         self.yawOffset    += self.xk[2]
         self.xk           = np.zeros((3, 1))
         self.Pk           = np.zeros((3, 3))
-        return ResetFilterResponse(request.reset_filter_requested)
 
+        self.x_frame_k    = self.x_map
+        return ResetFilterResponse(request.reset_filter_requested)
 
     # Publish markers
     def publish_point(self,p):
@@ -130,7 +136,7 @@ class EKF:
         # Publish predicted odom
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "world_ned"
+        odom.header.frame_id = "map"
         odom.child_frame_id = "turtlebot/kobuki/predicted_base_footprint"
 
 
@@ -155,7 +161,25 @@ class EKF:
         self.odom_pub.publish(odom)
 
         tf.TransformBroadcaster().sendTransform((float(self.xk[0, 0]), float(self.xk[1, 0]), 0.0), quaternion, rospy.Time.now(), odom.child_frame_id, odom.header.frame_id)
+    
+    def publish_tf_map(self):
+        x_map = self.x_map.copy()
+
+        # Define the translation and rotation for the inverse TF (base_footprint to world)
+        translation = (x_map[0], x_map[1], 0) # Set the x, y, z coordinates
+
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, x_map[2])  # Convert euler angles to quaternion
+        rotation = (quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         
+        # Publish the inverse TF from world to base_footprint
+        tf.TransformBroadcaster().sendTransform(
+            translation,
+            rotation,
+            rospy.Time.now(),
+            "turtlebot/kobuki/base_footprint",
+            "map"
+        )
+
     def spin(self):
         pass
 
