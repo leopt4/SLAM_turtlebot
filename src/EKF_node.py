@@ -3,6 +3,8 @@ import tf
 import rospy
 import numpy as np
 from sensor_msgs.msg import JointState
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Pose as PoseMsg
 from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker
 from untils.EKF_3DOF_InputDisplacement_Heading import *
@@ -28,7 +30,9 @@ class EKF:
 
         # PUBLISHERS
         # Publisher for visualizing the path to with rviz
-        self.point_marker_pub   = rospy.Publisher('~point_marker', Marker, queue_size=1)
+        # self.point_marker_pub   = rospy.Publisher('~point_marker', Marker, queue_size=1)
+        
+        self.key_frame_pub   = rospy.Publisher('/keyframes_deadReckoning', PoseArray, queue_size=10)
         # Publisher for sending Odometry
         self.odom_pub           = rospy.Publisher('/odom', Odometry, queue_size=1)
         
@@ -39,6 +43,7 @@ class EKF:
         # Init using sensors
         self.odom   = OdomData()
         self.mag    = Magnetometer()
+        self.poseArray = PoseArray()
 
         # Move
         while True:
@@ -89,6 +94,10 @@ class EKF:
 
             self.publish_tf_map()
 
+            self.poseArray.header.stamp = rospy.Time.now()
+            self.poseArray.header.frame_id = "map"
+            self.key_frame_pub.publish(self.poseArray)
+
     # Reset state and covariance of th EKF filter
     def reset_filter(self, request):
         # print("x position: ", np.round(self.xk[0], 2))
@@ -100,6 +109,21 @@ class EKF:
         self.Pk           = np.zeros((3, 3))
 
         self.x_frame_k    = self.x_map
+        
+        pose = PoseMsg()
+        pose.position.x = self.x_frame_k[0].copy()
+        pose.position.y = self.x_frame_k[1].copy()
+        pose.position.z = 0.0
+
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, float((self.x_frame_k[2, 0])))
+
+        pose.orientation.x = quaternion[0]
+        pose.orientation.y = quaternion[1]
+        pose.orientation.z = quaternion[2]
+        pose.orientation.w = quaternion[3]
+
+        self.poseArray.poses.append(pose)
+
         return ResetFilterResponse(request.reset_filter_requested)
 
     # Publish markers
@@ -184,7 +208,7 @@ class EKF:
         pass
 
 if __name__ == '__main__':
-    rospy.init_node('odom_publisher')
+    rospy.init_node('EKF_node')
     node = EKF('/turtlebot/joint_states')	
     
     rate = rospy.Rate(odom_freq)
