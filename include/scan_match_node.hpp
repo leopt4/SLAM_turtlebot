@@ -20,11 +20,13 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
 #include <Eigen/Dense>
 #include <eigen3/Eigen/Core>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/extract_indices.h>
+#include <geometry_msgs/PoseArray.h>
 
 #include "turtlebot_graph_slam/ResetFilter.h"
 
@@ -80,7 +82,8 @@ class ScanHandler
 {
 public:
     ros::NodeHandle &nh_;
-    ros::Publisher pointcloud_pub_ = this->nh_.advertise<sensor_msgs::PointCloud2>("/pc", 1);
+    ros::Publisher pointcloud_pub_ = this->nh_.advertise<sensor_msgs::PointCloud2>("/pc", 10);
+    ros::Publisher keyframe_pub_ = this->nh_.advertise<geometry_msgs::PoseArray>("/keyframes", 10);
 
     // Laser Geometry Projection for converting scan to PointCloud
     laser_geometry::LaserProjection projector_;
@@ -90,6 +93,8 @@ public:
 
     message_filters::Subscriber<sensor_msgs::LaserScan> laser_sub_;
     tf::MessageFilter<sensor_msgs::LaserScan> laser_notifier_;
+
+    tf::TransformBroadcaster keyframe_br_;
 
     double thresholdTime_;
     double thresholdOdometry_;
@@ -107,6 +112,7 @@ public:
 
     Eigen::Matrix4f Twtok = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f Tktokplus1 = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f Twtokplus1 = Eigen::Matrix4f::Identity();
 
     ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/predicted_base_footprint", 1), client_(nh.serviceClient<turtlebot_graph_slam::ResetFilter>("ResetFilter"))
     {
@@ -133,17 +139,18 @@ public:
 
     void storeWorldPointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)
     {
-        world_ned_storedPointClouds_.push_back(cloud);
+        map_storedPointClouds_.push_back(cloud);
     };
 
 private:
     // A vector of Pointers to the PointClouds for storing Incoming scans
     // std::vector<pcl::PointCloud<pcl::PointXYZ>> storedPointClouds_;   // For directly storing pointclouds
     std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> storedPointClouds_;
-    std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> world_ned_storedPointClouds_;
+    std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> map_storedPointClouds_;
     std::vector<tf::StampedTransform> storedKeyframes_;
     std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> hypothesis_;
     pcl::PointCloud<pcl::PointXYZ> world_map_;
+    std::vector<Eigen::Matrix4f> keyframes_;
     // void publishMatching(const std::pair<double, double> &transformations, const std::vector<int> &matching_ids);
 
     // Scan Callback method
@@ -159,7 +166,7 @@ private:
 
                 // Saving the current key frame of the robot
                 std::string targetFrame = "turtlebot/kobuki/predicted_base_footprint";
-                std::string sourceFrame = "world_ned";
+                std::string sourceFrame = "map";
                 ros::Time scanTime = scan->header.stamp;
 
                 // Wait for the transformation to become available
@@ -230,7 +237,7 @@ private:
                 // publishMatching(Transformations_vector);
 
                 // TODO: Registrations conditions
-                if ( true ||current_scan_index == 0 || current_scan_index == 1 || current_scan_index ==2 || current_scan_index ==3)
+                if (true || current_scan_index == 0 || current_scan_index == 1 || current_scan_index == 2 || current_scan_index == 3)
                 {
                     registerPointcloudinWorld(planarPointcloud);
                 }
@@ -417,21 +424,25 @@ private:
     void registerPointcloudinWorld(const pcl::PointCloud<pcl::PointXYZ>::Ptr &currentScan)
     {
 
-        // std::cout << "T w to k for scan ID "<<current_scan_index<< ":\n"
+        // std::cout << "T w to k for scan ID " << current_scan_index << ":\n"
         //           << Twtok << std::endl;
-        // std::cout << "T k to k+1 for scan ID "<<current_scan_index<< ":\n"
+        // std::cout << "T k to k+1 for scan ID " << current_scan_index << ":\n"
         //           << Tktokplus1 << std::endl;
 
-        Eigen::Matrix4f Twtokplus1 = Twtok * Tktokplus1;
+        Twtokplus1 = Twtok * Tktokplus1;
 
-        // std::cout << "T w to k+1 for scan ID "<<current_scan_index<< ":\n"
+        keyframes_.push_back(Twtokplus1);
+
+        // std::cout << "T w to k+1 for scan ID " << current_scan_index << ":\n"
         //           << Twtokplus1 << std::endl;
 
-        // Transform currentScan to world_ned
-        pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud_world(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::transformPointCloud(*currentScan, *transformed_cloud_world, Twtokplus1);
+        publishKeyframeinMap();
 
-        // Store it in world_ned_storedPointClouds_
+        // Transform currentScan to map frame
+        pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud_world(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::transformPointCloud(*currentScan, *transformed_cloud_world, Tktokplus1);
+
+        // Store it in map_storedPointClouds_
         storeWorldPointCloud(transformed_cloud_world);
 
         // Combine the pointcloud
@@ -457,12 +468,45 @@ private:
 
         pcl::toROSMsg(world_map_, world_cloud_out);
 
-        world_cloud_out.header.frame_id = "world_ned";
+        world_cloud_out.header.frame_id = "map";
         world_cloud_out.header.stamp = ros::Time::now();
 
         // Publish the point cloud
         pointcloud_pub_.publish(world_cloud_out);
     };
+
+    void publishKeyframeinMap()
+    {
+        geometry_msgs::PoseArray poseArray;
+        poseArray.header.frame_id = "map";
+        poseArray.header.stamp = ros::Time::now();
+
+        // Iterate over all keyframes
+        for (size_t i = 0; i < keyframes_.size(); ++i)
+        {
+            geometry_msgs::Pose pose;
+            pose.position.x = keyframes_[i](0, 3);
+            pose.position.y = keyframes_[i](1, 3);
+            pose.position.z = keyframes_[i](2, 3);
+
+            Eigen::Quaternionf quaternion(keyframes_[i].block<3, 3>(0, 0));
+            pose.orientation.x = quaternion.x();
+            pose.orientation.y = quaternion.y();
+            pose.orientation.z = quaternion.z();
+            pose.orientation.w = quaternion.w();
+
+            // Add the pose to the PoseArray
+            poseArray.poses.push_back(pose);
+
+            // // Publish the pose as a TF transform to visualize it as a frame in RViz
+            // tf::Transform transform;
+            // tf::poseMsgToTF(pose, transform);
+            // tf::StampedTransform stampedTransform(transform, poseArray.header.stamp, "map", "keyframe_" + std::to_string(i));
+            // keyframe_br_.sendTransform(stampedTransform);
+        }
+
+        keyframe_pub_.publish(poseArray);
+    }
 };
 
 #endif // SCAN_HANDLER_H
