@@ -114,11 +114,11 @@ public:
     Eigen::Matrix4f Tktokplus1 = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f Twtokplus1 = Eigen::Matrix4f::Identity();
 
-    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/predicted_base_footprint", 1), client_(nh.serviceClient<turtlebot_graph_slam::ResetFilter>("ResetFilter"))
+    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/base_footprint", 1), client_(nh.serviceClient<turtlebot_graph_slam::ResetFilter>("ResetFilter"))
     {
 
         // Initialize subscribers
-        // odom_sub_ = nh.subscribe("/turtlebot/kobuki/odom_ground_truth", 1, &ScanHandler::odometryCallback, this);
+        odom_sub_ = nh.subscribe("/odom", 10, &ScanHandler::odometryCallback, this);
 
         // Timer for getting a new scan
         timer_ = nh.createTimer(ros::Duration(thresholdTime_), &ScanHandler::timerCallback, this);
@@ -140,6 +140,9 @@ public:
     void storeWorldPointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)
     {
         map_storedPointClouds_.push_back(cloud);
+        std::string packagePath = ros::package::getPath("turtlebot_graph_slam");
+        std::string directory = "/pcl_viz/";
+        pcl::io::savePCDFileASCII(packagePath + directory + "world_map.pcd", *cloud);
     };
 
 private:
@@ -162,19 +165,10 @@ private:
             try
             {
                 ros::Time start_time_ = ros::Time::now();
-                projector_.transformLaserScanToPointCloud("turtlebot/kobuki/predicted_base_footprint", *scan, cloud_in, listener_);
+                projector_.transformLaserScanToPointCloud("turtlebot/kobuki/base_footprint", *scan, cloud_in, listener_);
 
-                // Saving the current key frame of the robot
-                std::string targetFrame = "turtlebot/kobuki/predicted_base_footprint";
-                std::string sourceFrame = "map";
-                ros::Time scanTime = scan->header.stamp;
-
-                // Wait for the transformation to become available
-                listener_.waitForTransform(targetFrame, sourceFrame, scanTime, ros::Duration(0.05));
-
-                // Now, attempt to look up the transformation
-                listener_.lookupTransform(targetFrame, sourceFrame, scanTime, current_key_frame);
                 last_scan_odom_ = current_odom_;
+                odomtoTF(last_scan_odom_, current_key_frame);
 
                 turtlebot_graph_slam::ResetFilter srv;
                 srv.request.reset_filter_requested = true;
@@ -188,6 +182,12 @@ private:
                     ROS_ERROR("Failed to call reset Odometry Filter!!!!!!!");
                 };
 
+                Eigen::Matrix4f current_tf = TFtoSE3(current_key_frame);
+
+                std::cout << "Current Key Frame:\n"
+                          << current_tf << std::endl;
+
+
                 // Convert to PCL format for processing
                 pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
                 pcl::fromROSMsg(cloud_in, *pclCloud);
@@ -198,12 +198,6 @@ private:
                 // Storing the Pointcloud and keyframe
                 storePointCloudandKeyframe(planarPointcloud, current_key_frame); // Pass the PCL point cloud pointer
                 current_scan_index++;
-
-                Eigen::Matrix4f current_tf = TFtoSE3(current_key_frame);
-
-                std::cout << "Current Key Frame:\n"
-                          << current_tf << std::endl;
-
                 ROS_INFO("---Pointcloud (ID - %d) Received and Stored---", current_scan_index);
 
                 // Publishing Obtained Pointcloud
@@ -259,17 +253,22 @@ private:
     // Odometry Callback
     void odometryCallback(const nav_msgs::Odometry::ConstPtr &odom)
     {
-        // Saving current odom
+        // Saving current odometry
         current_odom_ = *odom;
 
         double dx = odom->pose.pose.position.x - (this->last_scan_odom_.pose.pose.position.x);
         double dy = odom->pose.pose.position.y - (this->last_scan_odom_.pose.pose.position.y);
         double displacement = sqrt(dx * dx + dy * dy);
 
-        if (displacement > (thresholdOdometry_))
+        // Calculate the change in orientation
+        double dtheta = atan2(dy, dx) - atan2(this->last_scan_odom_.pose.pose.orientation.y, this->last_scan_odom_.pose.pose.orientation.x);
+        dtheta = fmod(dtheta + M_PI, 2 * M_PI) - M_PI; // Normalize to [-π, π]
+
+        // Check if the change in orientation is greater than π/8 or the displacement is greater than the threshold
+        if (fabs(dtheta) > M_PI / 8 || displacement > thresholdOdometry_)
         {
             odom_trigger_ = true;
-        };
+        }
     };
 
     // Timer Callback
@@ -348,6 +347,23 @@ private:
         return transformStamped;
     };
 
+    void odomtoTF(const nav_msgs::Odometry &odom_in, tf::StampedTransform &tf_out)
+    {
+        // Extract position and orientation from the odometry message
+        geometry_msgs::Pose pose = odom_in.pose.pose;
+        tf::Quaternion q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+        tf::Vector3 t(pose.position.x, pose.position.y, pose.position.z);
+
+        // Create tf::Transform
+        tf::Transform transform(q, t);
+
+        // Invert the transform
+        tf::Transform inverseTransform = transform.inverse();
+
+        // Assign the inverted transform to tf_out
+        tf_out = tf::StampedTransform(inverseTransform, odom_in.header.stamp, odom_in.header.frame_id, odom_in.child_frame_id);
+    }
+
     std::vector<geometry_msgs::TransformStamped> pointCloudMatching(const pcl::PointCloud<pcl::PointXYZ>::Ptr &currentScan)
     {
         std::vector<geometry_msgs::TransformStamped> transformations;
@@ -391,12 +407,12 @@ private:
                 ROS_INFO("ICP Fitness score --- %f", meanSquaredDistance);
 
                 // Plot Transformation saving condition
-                if (current_scan_index == 1)
+                if (current_scan_index == 2)
                 {
                     savePointcloud(currentScan, hypothesis_[i], cloud_source_aligned);
                 };
 
-                if (meanSquaredDistance <= 1.0)
+                if (meanSquaredDistance <= 2.0)
                 {
                     // Create a TransformStamped message
                     std::string frameID = "jk";
@@ -440,7 +456,7 @@ private:
 
         // Transform currentScan to map frame
         pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud_world(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::transformPointCloud(*currentScan, *transformed_cloud_world, Tktokplus1);
+        pcl::transformPointCloud(*currentScan, *transformed_cloud_world, Twtokplus1);
 
         // Store it in map_storedPointClouds_
         storeWorldPointCloud(transformed_cloud_world);
