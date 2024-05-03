@@ -19,7 +19,8 @@ class OdomData:
         :param:
         """
         self.newData    = False     # Flag presenting got new synchronized data
-
+        self.mode       = rospy.get_param('~mode')
+        
         # Init left and right encoders
         self.rightEncoder   = Encoder('turtlebot/kobuki/wheel_right_joint')
         self.leftEncoder    = Encoder('turtlebot/kobuki/wheel_left_joint')
@@ -37,13 +38,21 @@ class OdomData:
         :param:
         :return True: 
         """
-        # Check if encoder data is for the left wheel
-        if self.leftEncoder.tag in odom.name:
+        if self.mode == "SIL":
+            # Check if encoder data is for the left wheel
+            if self.leftEncoder.tag in odom.name:
+                self.leftEncoder.velocity   = odom.velocity[0]
+                self.leftEncoder.stamp      = rospy.Time.now() 
+            # Check if encoder data is for the right wheel
+            elif self.rightEncoder.tag in odom.name:
+                self.rightEncoder.velocity  = odom.velocity[0]
+                self.rightEncoder.stamp     = rospy.Time.now() 
+        elif self.mode == "HIL":
+            # Get encoder data for the left wheel
             self.leftEncoder.velocity   = odom.velocity[0]
             self.leftEncoder.stamp      = rospy.Time.now() 
-        # Check if encoder data is for the right wheel
-        elif self.rightEncoder.tag in odom.name:
-            self.rightEncoder.velocity  = odom.velocity[0]
+            # Get encoder data for the right wheel
+            self.rightEncoder.velocity  = odom.velocity[1]
             self.rightEncoder.stamp     = rospy.Time.now() 
         return True
 

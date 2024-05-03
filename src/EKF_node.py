@@ -28,6 +28,7 @@ class EKF:
         self.x_map        = np.zeros((3, 1))        # Robot pose in the map frame
         self.x_frame_k    = np.zeros((3, 1))        # k frame pose in the map frame
 
+        self.mode         = rospy.get_param('~mode')
         # PUBLISHERS
         # Publisher for visualizing the path to with rviz
         # self.point_marker_pub   = rospy.Publisher('~point_marker', Marker, queue_size=1)
@@ -38,21 +39,24 @@ class EKF:
         
         # SUBSCRIBERS
         self.odom_sub               = rospy.Subscriber(odom_topic, JointState, self.get_odom) 
-        self.ground_truth_sub       = rospy.Subscriber('/turtlebot/kobuki/odom_ground_truth', Odometry, self.get_ground_truth) 
+
+        if self.mode == "SIL":
+            self.ground_truth_sub       = rospy.Subscriber('/turtlebot/kobuki/odom_ground_truth', Odometry, self.get_ground_truth) 
         
         # Init using sensors
         self.odom   = OdomData()
         self.mag    = Magnetometer()
         self.poseArray = PoseArray()
 
-        # Move
-        while True:
-            if self.current_pose is not None:
-                # self.xk           = self.current_pose.reshape(3,1)
-                # self.xk           = np.zeros((3, 1))
-                # self.Pk           = np.zeros((3, 3))
-                self.yawOffset    = self.current_pose[2]
-                break
+        if self.mode == "SIL":
+            # Move
+            while True:
+                if self.current_pose is not None:
+                    # self.xk           = self.current_pose.reshape(3,1)
+                    # self.xk           = np.zeros((3, 1))
+                    # self.Pk           = np.zeros((3, 3))
+                    self.yawOffset    = self.current_pose[2]
+                    break
         
         # SERVICES
         self.reset_srv = rospy.Service('ResetFilter', ResetFilter, self.reset_filter)

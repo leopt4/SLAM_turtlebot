@@ -74,9 +74,12 @@ class EKF_3DOF_InputDisplacement_Heading(GFLocalization, EKF, OdomData):
 
         :return: zk, Rk, Hk, Vk
         """
-         
-        # Read compass sensor
-        zk, Rk  = self.magData.get_magnetometer()
+        if self.headingData == True: 
+            # Read compass sensor
+            zk, Rk  = self.magData.get_magnetometer()
+        else:
+            zk = np.zeros((0,0))
+            Rk = np.zeros((0,0))
 
         # Raise flag got measurement
         if len(zk) != 0:
