@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/leopham/catkin_ws/src/turtlebot_graph_slam/src/scan_match_node.cpp" "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/CMakeFiles/scan_match_node.dir/src/scan_match_node.cpp.o"
+  "/home/leopham/catkin_ws/src/SLAM_turtlebot/src/scan_match_node.cpp" "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/CMakeFiles/scan_match_node.dir/src/scan_match_node.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -15,7 +15,7 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
   "DISABLE_PNG"
   "ROSCONSOLE_BACKEND_LOG4CXX"
   "ROS_BUILD_SHARED_LIBS=1"
-  "ROS_PACKAGE_NAME=\"turtlebot_graph_slam\""
+  "ROS_PACKAGE_NAME=\"SLAM_turtlebot\""
   "qh_QHpointer"
   "vtkRenderingContext2D_AUTOINIT=1(vtkRenderingContextOpenGL2)"
   "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL2)"

@@ -52,7 +52,7 @@ def main():
     # Initialize the ROS package manager
     rospack = rospkg.RosPack()
     # Get the path of the package
-    package_path = str(rospack.get_path('turtlebot_graph_slam'))
+    package_path = str(rospack.get_path('SLAM_turtlebot'))
     
     # Create a ROS bag
     global js_bag

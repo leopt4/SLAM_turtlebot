@@ -28,7 +28,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <geometry_msgs/PoseArray.h>
 
-#include "turtlebot_graph_slam/ResetFilter.h"
+#include "SLAM_turtlebot/ResetFilter.h"
 
 #include <sstream>
 
@@ -114,7 +114,7 @@ public:
     Eigen::Matrix4f Tktokplus1 = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f Twtokplus1 = Eigen::Matrix4f::Identity();
 
-    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/base_footprint", 1), client_(nh.serviceClient<turtlebot_graph_slam::ResetFilter>("ResetFilter"))
+    ScanHandler(ros::NodeHandle &nh, double thresholdTime, double thresholdOdometry) : nh_(nh), thresholdTime_(thresholdTime), thresholdOdometry_(thresholdOdometry), laser_sub_(nh, "/turtlebot/kobuki/sensors/rplidar", 1), laser_notifier_(laser_sub_, listener_, "turtlebot/kobuki/base_footprint", 1), client_(nh.serviceClient<SLAM_turtlebot::ResetFilter>("ResetFilter"))
     {
 
         // Initialize subscribers
@@ -140,7 +140,7 @@ public:
     void storeWorldPointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)
     {
         map_storedPointClouds_.push_back(cloud);
-        std::string packagePath = ros::package::getPath("turtlebot_graph_slam");
+        std::string packagePath = ros::package::getPath("SLAM_turtlebot");
         std::string directory = "/pcl_viz/";
         pcl::io::savePCDFileASCII(packagePath + directory + "world_map.pcd", *cloud);
     };
@@ -170,7 +170,7 @@ private:
                 last_scan_odom_ = current_odom_;
                 odomtoTF(last_scan_odom_, current_key_frame);
 
-                turtlebot_graph_slam::ResetFilter srv;
+                SLAM_turtlebot::ResetFilter srv;
                 srv.request.reset_filter_requested = true;
 
                 if (client_.call(srv))
@@ -430,7 +430,7 @@ private:
     void savePointcloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &source, const pcl::PointCloud<pcl::PointXYZ>::Ptr &target, const pcl::PointCloud<pcl::PointXYZ>::Ptr &aligned)
     {
         // Get the path to the current ROS package
-        std::string packagePath = ros::package::getPath("turtlebot_graph_slam");
+        std::string packagePath = ros::package::getPath("SLAM_turtlebot");
         std::string directory = "/pcl_viz/";
         pcl::io::savePCDFileASCII(packagePath + directory + "source.pcd", *source);
         pcl::io::savePCDFileASCII(packagePath + directory + "target.pcd", *target);

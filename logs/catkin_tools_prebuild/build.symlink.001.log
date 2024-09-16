@@ -1,48 +1,48 @@
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./local_setup.zsh
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./setup.bash
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./setup.zsh
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./_setup_util.py
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./local_setup.sh
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./local_setup.bash
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./setup.sh
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./cmake.lock
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/./env.sh
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/lib/pkgconfig/catkin_tools_prebuild.pc
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
-Symlinking /home/leopham/catkin_ws/src/turtlebot_graph_slam/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/local_setup.zsh, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./local_setup.zsh)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/setup.bash, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./setup.bash)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/setup.zsh, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./setup.zsh)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/_setup_util.py, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./_setup_util.py)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/local_setup.sh, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./local_setup.sh)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/local_setup.bash, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./local_setup.bash)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/setup.sh, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./setup.sh)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/cmake.lock, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./cmake.lock)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/env.sh, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./env.sh)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/lib/pkgconfig/catkin_tools_prebuild.pc, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/lib/pkgconfig/catkin_tools_prebuild.pc)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake)
-Cleaning: (/home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/.private/catkin_tools_prebuild/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake, /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake)
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./local_setup.zsh
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./local_setup.zsh
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./setup.bash
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./setup.zsh
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./_setup_util.py
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./local_setup.sh
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./local_setup.bash
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./setup.sh
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./cmake.lock
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/./env.sh
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/lib/pkgconfig/catkin_tools_prebuild.pc
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
+Symlinking /home/leopham/catkin_ws/src/SLAM_turtlebot/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/local_setup.zsh, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./local_setup.zsh)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/setup.bash, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./setup.bash)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/setup.zsh, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./setup.zsh)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/_setup_util.py, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./_setup_util.py)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/local_setup.sh, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./local_setup.sh)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/local_setup.bash, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./local_setup.bash)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/setup.sh, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./setup.sh)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/cmake.lock, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./cmake.lock)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/env.sh, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./env.sh)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/lib/pkgconfig/catkin_tools_prebuild.pc, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/lib/pkgconfig/catkin_tools_prebuild.pc)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake)
+Cleaning: (/home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/.private/catkin_tools_prebuild/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake, /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake)
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./local_setup.zsh
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./setup.bash
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./setup.bash
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./setup.zsh
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./setup.zsh
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./_setup_util.py
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./_setup_util.py
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./local_setup.sh
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./local_setup.sh
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./local_setup.bash
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./local_setup.bash
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./setup.sh
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./setup.sh
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./cmake.lock
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./cmake.lock
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/./env.sh
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/./env.sh
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/lib/pkgconfig/catkin_tools_prebuild.pc
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/lib/pkgconfig/catkin_tools_prebuild.pc
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
 Already unlinked: {}
-Unlinking: /home/leopham/Documents/8. Hands-on Localization/turtlebot_graph_slam/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
+Unlinking: /home/leopham/Documents/8. Hands-on Localization/SLAM_turtlebot/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
 Already unlinked: {}

@@ -463,7 +463,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/catkin_generated/env_cached.sh"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/catkin_generated/env_cached.sh"
 		},
 		{
 			"name" : "CATKIN_PACKAGE_PREFIX",
@@ -511,7 +511,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/test_results"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/test_results"
 		},
 		{
 			"name" : "CMAKE_ADDR2LINE",
@@ -567,7 +567,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -1155,7 +1155,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot"
 		},
 		{
 			"name" : "CMAKE_INSTALL_BINDIR",
@@ -1655,7 +1655,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "turtlebot_graph_slam"
+			"value" : "SLAM_turtlebot"
 		},
 		{
 			"name" : "CMAKE_PROJECT_VERSION",
@@ -2575,7 +2575,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/gmock"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/gmock"
 		},
 		{
 			"name" : "GMOCK_FROM_SOURCE_MAIN_LIBRARIES",
@@ -2711,7 +2711,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/gtest"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/gtest"
 		},
 		{
 			"name" : "GTEST_FROM_SOURCE_MAIN_LIBRARIES",
@@ -7531,7 +7531,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/gtest/googlemock"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/gtest/googlemock"
 		},
 		{
 			"name" : "gmock_LIB_DEPENDS",
@@ -7595,7 +7595,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/gtest"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/gtest"
 		},
 		{
 			"name" : "googletest-distribution_SOURCE_DIR",
@@ -7619,7 +7619,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build/gtest/googletest"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build/gtest/googletest"
 		},
 		{
 			"name" : "gtest_SOURCE_DIR",
@@ -8302,7 +8302,7 @@
 			"value" : "/opt/ros/noetic/share/topic_tools/cmake"
 		},
 		{
-			"name" : "turtlebot_graph_slam_BINARY_DIR",
+			"name" : "SLAM_turtlebot_BINARY_DIR",
 			"properties" : 
 			[
 				{
@@ -8311,10 +8311,10 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam/build"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build"
 		},
 		{
-			"name" : "turtlebot_graph_slam_SOURCE_DIR",
+			"name" : "SLAM_turtlebot_SOURCE_DIR",
 			"properties" : 
 			[
 				{
@@ -8323,7 +8323,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/leopham/catkin_ws/src/turtlebot_graph_slam"
+			"value" : "/home/leopham/catkin_ws/src/SLAM_turtlebot"
 		},
 		{
 			"name" : "xmlrpcpp_DIR",

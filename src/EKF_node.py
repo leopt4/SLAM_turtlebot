@@ -12,7 +12,7 @@ from untils.EKF_3DOF_InputDisplacement_Heading import *
 from untils.Odometry import *
 from untils.Magnetometer import *
 
-from turtlebot_graph_slam.srv import ResetFilter, ResetFilterResponse
+from SLAM_turtlebot.srv import ResetFilter, ResetFilterResponse
 
 odom_freq   = 0.1
 odom_window = 100000.0
