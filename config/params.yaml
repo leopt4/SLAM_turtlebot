@@ -1,0 +1,19 @@
+graphSLAM:
+  saveGraph: false
+  saveWorldMap: true
+  ISAM2:
+    Use_ISAM2: false
+    params:
+      relinearizeThreshold: 0.1
+      relinearizeSkip: 10
+      factorization: "CHOLESKY"
+  LevenbergMarquardt:
+    params:
+      initialLambda: 0.00001
+      lambdaFactor: 5.0
+      lambdaUpperBound: 100000
+      lambdaLowerBound: 0.00001
+      minModelFidelity: 0.001
+      useDiagonalDamping: true
+      diagonalDamping: 0.001
+      useLevenbergMarquardt: true

@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "devel/lib/SLAM_turtlebot/IMU_node"
+			"path" : "devel/lib/slam_turtlebot/IMU_node"
 		}
 	],
 	"backtrace" : 1,
@@ -231,7 +231,7 @@
 				},
 				{
 					"backtrace" : 17,
-					"define" : "ROS_PACKAGE_NAME=\"SLAM_turtlebot\""
+					"define" : "ROS_PACKAGE_NAME=\"slam_turtlebot\""
 				},
 				{
 					"backtrace" : 24,
@@ -258,7 +258,7 @@
 				},
 				{
 					"backtrace" : 30,
-					"path" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/include"
+					"path" : "/home/leopham/catkin_ws/src/slam_turtlebot/include"
 				},
 				{
 					"backtrace" : 30,

@@ -1,8 +1,6 @@
 import numpy as np
 import rospy
-
-wheelBase   = 0.235
-wheelRadius = 0.035
+from config import *
 
 class Encoder:
     def __init__(self, tag:str):
@@ -12,14 +10,15 @@ class Encoder:
         self.stamp      = None      # Time stamp        [ros time]
 
 class OdomData:
-    def __init__(self) -> None:
+    def __init__(self, Qk):
         """
         Constructor of the OdomData class.
 
         :param:
         """
         self.newData    = False     # Flag presenting got new synchronized data
-        self.mode       = rospy.get_param('~mode')
+        self.mode       = rospy.get_param("MODE", "SIL") # Simulation mode: HIL or SIL
+        # self.mode       = rospy.get_param("MODE", "HIL") # Simulation mode: HIL or SIL
         
         # Init left and right encoders
         self.rightEncoder   = Encoder('turtlebot/kobuki/wheel_right_joint')
@@ -30,7 +29,7 @@ class OdomData:
         self.deltaT                 = None          # The length of period between this sync data and the last sync data
         self.displacement           = [0.0, 0.0]    # Displacement between this sync data and the last sync data
 
-        self.Qk         = np.diag(np.array([0.01 ** 2, 0.001 ** 2, np.deg2rad(0.1) ** 2]))  # covariance of displacement noise
+        self.Qk         = Qk # covariance of displacement noise
 
     def update_encoder_reading(self, odom):
         """
@@ -94,12 +93,12 @@ class OdomData:
         :return uk: displacement
         """
         # Compute displacements of the left and right wheels
-        d_L = self.synchronized_velocity[0] * wheelRadius * self.deltaT
-        d_R = self.synchronized_velocity[1] * wheelRadius * self.deltaT
+        d_L = self.synchronized_velocity[0] * ROBOT_WHEEL_RADIUS * self.deltaT
+        d_R = self.synchronized_velocity[1] * ROBOT_WHEEL_RADIUS * self.deltaT
         # Compute displacement of the center point of robot between k-1 and k
         d       = (d_L + d_R) / 2.
         # Compute rotated angle of robot around the center point between k-1 and k
-        delta_theta_k   = (-d_R + d_L) / wheelBase
+        delta_theta_k   = (-d_R + d_L) / ROBOT_WHEEL_BASE
 
         # Compute xk from xk_1 and the travel distance and rotated angle. Got the equations from chapter 1.4.1: Odometry 
         uk              = np.array([[d],

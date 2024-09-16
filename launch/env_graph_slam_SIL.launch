@@ -1,0 +1,39 @@
+<launch>
+
+    <rosparam file="$(find slam_turtlebot)/config/params.yaml" command="load"/>
+
+    <param name="MODE" type="string" value="SIL" /> 
+
+    <!-- StoneFish simulator -->
+    <include file="$(find turtlebot_simulation)/launch/turtlebot_integration.launch" />
+    
+    <!-- Environment node -->
+    <node pkg="turtlebot_graph_slam" type="turtlebot_teleop_convert_node.py" name="turtlebot_teleop_convert_node"/> 
+    <node pkg="turtlebot_graph_slam" type="environment_node.py" name="environment_node"/>
+
+    <!-- EKF node -->
+    <node pkg="turtlebot_graph_slam" type="EKF_node.py" name="EKF_node"/>
+
+    <!-- Scan matching Node -->
+    <!-- <node pkg="turtlebot_graph_slam" type="scan_match_node" name="scan_match_node"/> -->
+
+    <!-- Graph SLAM Node -->
+    <!-- <node pkg="turtlebot_graph_slam" type="graph_slam_node" name="graph_slam_node"/> -->
+
+    <!-- Octomap Server -->
+	<!-- <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+		<param name="resolution" value="0.05" /> -->
+		
+		<!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
+		<!-- <param name="frame_id" type="string" value="map" /> -->
+		
+		<!-- maximum range to integrate (speedup!) -->
+		<!-- <param name="sensor_model/max_range" value="5.0" /> -->
+		
+		<!-- data source to integrate (PointCloud2) -->
+		<!-- <remap from="cloud_in" to="/sensors/pointcloud" /> -->
+		<!-- <remap from="cloud_in" to="/pc" /> -->
+	
+	<!-- </node> -->
+
+</launch>

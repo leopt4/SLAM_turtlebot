@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(SLAM_turtlebot)
+project(slam_turtlebot)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -125,14 +125,14 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES SLAM_turtlebot
+    LIBRARIES slam_turtlebot
     CATKIN_DEPENDS
     roscpp
     std_msgs
     sensor_msgs
     pcl_ros
 #  INCLUDE_DIRS include
-#  LIBRARIES SLAM_turtlebot
+#  LIBRARIES slam_turtlebot
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -159,7 +159,7 @@ ${Boost_INCLUDE_DIRS}
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/SLAM_turtlebot.cpp
+#   src/${PROJECT_NAME}/slam_turtlebot.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -170,7 +170,7 @@ ${Boost_INCLUDE_DIRS}
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(SLAM_turtlebot_node src/graph_slam_node.cpp)
+add_executable(slam_turtlebot_node src/graph_slam_node.cpp)
 add_executable(scan_match_node src/scan_match_node.cpp)
 
 ## Rename C++ executable without prefix
@@ -184,7 +184,7 @@ add_executable(scan_match_node src/scan_match_node.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(SLAM_turtlebot_node
+target_link_libraries(slam_turtlebot_node
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -213,7 +213,7 @@ target_link_libraries(scan_match_node
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS SLAM_turtlebot_node scan_match_node
+install(TARGETS slam_turtlebot_node scan_match_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
@@ -244,7 +244,7 @@ install(TARGETS SLAM_turtlebot_node scan_match_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_SLAM_turtlebot.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_slam_turtlebot.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

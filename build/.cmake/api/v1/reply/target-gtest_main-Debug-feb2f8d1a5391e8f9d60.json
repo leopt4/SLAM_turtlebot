@@ -146,7 +146,7 @@
 				"role" : "flags"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/home/leopham/catkin_ws/src/SLAM_turtlebot/build/gtest/lib",
+				"fragment" : "-Wl,-rpath,/home/leopham/catkin_ws/src/slam_turtlebot/build/gtest/lib",
 				"role" : "libraries"
 			},
 			{

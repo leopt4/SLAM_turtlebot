@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/leopham/catkin_ws/src/SLAM_turtlebot
+CMAKE_SOURCE_DIR = /home/leopham/catkin_ws/src/slam_turtlebot
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/leopham/catkin_ws/src/SLAM_turtlebot/build
+CMAKE_BINARY_DIR = /home/leopham/catkin_ws/src/slam_turtlebot/build
 
 # Utility rule file for roscpp_generate_messages_lisp.
 
@@ -67,6 +67,6 @@ CMakeFiles/roscpp_generate_messages_lisp.dir/clean:
 .PHONY : CMakeFiles/roscpp_generate_messages_lisp.dir/clean
 
 CMakeFiles/roscpp_generate_messages_lisp.dir/depend:
-	cd /home/leopham/catkin_ws/src/SLAM_turtlebot/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/leopham/catkin_ws/src/SLAM_turtlebot /home/leopham/catkin_ws/src/SLAM_turtlebot /home/leopham/catkin_ws/src/SLAM_turtlebot/build /home/leopham/catkin_ws/src/SLAM_turtlebot/build /home/leopham/catkin_ws/src/SLAM_turtlebot/build/CMakeFiles/roscpp_generate_messages_lisp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/leopham/catkin_ws/src/slam_turtlebot/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/leopham/catkin_ws/src/slam_turtlebot /home/leopham/catkin_ws/src/slam_turtlebot /home/leopham/catkin_ws/src/slam_turtlebot/build /home/leopham/catkin_ws/src/slam_turtlebot/build /home/leopham/catkin_ws/src/slam_turtlebot/build/CMakeFiles/roscpp_generate_messages_lisp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/roscpp_generate_messages_lisp.dir/depend
 

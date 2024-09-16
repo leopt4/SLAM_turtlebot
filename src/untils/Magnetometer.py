@@ -3,7 +3,7 @@ import rospy
 from .AngleHandler import *
 
 class Magnetometer:
-    def __init__(self) -> None:
+    def __init__(self, Rk) -> None:
         """
         Constructor of the OdomData class.
 
@@ -12,7 +12,7 @@ class Magnetometer:
         self.heading        = None          # [rad]
         self.stamp          = None          # [rostime]
         self.newData        = False         # Flag presenting got new data
-        self.Rk             = np.diag([np.deg2rad(1)**2]) # covariance of heading noise
+        self.Rk             = Rk            # covariance of heading noise
 
     def read_magnetometer(self, mag):
         """

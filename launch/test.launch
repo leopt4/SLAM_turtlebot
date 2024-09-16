@@ -1,4 +1,4 @@
 <launch>
     <!-- Scan matching node -->
-    <node pkg="SLAM_turtlebot" type="scan_match_node" name="scan_match_node"/>
+    <node pkg="slam_turtlebot" type="scan_match_node" name="scan_match_node"/>
 </launch>

@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/leopham/catkin_ws/src/SLAM_turtlebot
+CMAKE_SOURCE_DIR = /home/leopham/catkin_ws/src/slam_turtlebot
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/leopham/catkin_ws/src/SLAM_turtlebot/build
+CMAKE_BINARY_DIR = /home/leopham/catkin_ws/src/slam_turtlebot/build
 
 # Utility rule file for pcl_msgs_generate_messages_eus.
 
@@ -67,6 +67,6 @@ CMakeFiles/pcl_msgs_generate_messages_eus.dir/clean:
 .PHONY : CMakeFiles/pcl_msgs_generate_messages_eus.dir/clean
 
 CMakeFiles/pcl_msgs_generate_messages_eus.dir/depend:
-	cd /home/leopham/catkin_ws/src/SLAM_turtlebot/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/leopham/catkin_ws/src/SLAM_turtlebot /home/leopham/catkin_ws/src/SLAM_turtlebot /home/leopham/catkin_ws/src/SLAM_turtlebot/build /home/leopham/catkin_ws/src/SLAM_turtlebot/build /home/leopham/catkin_ws/src/SLAM_turtlebot/build/CMakeFiles/pcl_msgs_generate_messages_eus.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/leopham/catkin_ws/src/slam_turtlebot/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/leopham/catkin_ws/src/slam_turtlebot /home/leopham/catkin_ws/src/slam_turtlebot /home/leopham/catkin_ws/src/slam_turtlebot/build /home/leopham/catkin_ws/src/slam_turtlebot/build /home/leopham/catkin_ws/src/slam_turtlebot/build/CMakeFiles/pcl_msgs_generate_messages_eus.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/pcl_msgs_generate_messages_eus.dir/depend
 

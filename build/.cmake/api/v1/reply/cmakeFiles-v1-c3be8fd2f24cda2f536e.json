@@ -1980,8 +1980,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/leopham/catkin_ws/src/SLAM_turtlebot/build",
-		"source" : "/home/leopham/catkin_ws/src/SLAM_turtlebot"
+		"build" : "/home/leopham/catkin_ws/src/slam_turtlebot/build",
+		"source" : "/home/leopham/catkin_ws/src/slam_turtlebot"
 	},
 	"version" : 
 	{

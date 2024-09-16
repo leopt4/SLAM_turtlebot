@@ -1,7 +1,7 @@
 prefix=/usr/local
 
-Name: SLAM_turtlebot
-Description: Description of SLAM_turtlebot
+Name: slam_turtlebot
+Description: Description of slam_turtlebot
 Version: 0.0.0
 Cflags: 
 Libs: -L${prefix}/lib 
